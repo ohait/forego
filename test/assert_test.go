@@ -3,7 +3,7 @@ package test
 import (
 	"testing"
 
-	"github.com/Aize-Public/forego/utils/ast"
+	"github.com/ohait/forego/utils/ast"
 )
 
 func testAssignment(t *testing.T, cond bool) {

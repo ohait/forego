@@ -3,8 +3,8 @@ package lists_test
 import (
 	"testing"
 
-	"github.com/Aize-Public/forego/test"
-	"github.com/Aize-Public/forego/utils/lists"
+	"github.com/ohait/forego/test"
+	"github.com/ohait/forego/utils/lists"
 )
 
 func TestUnique(t *testing.T) {

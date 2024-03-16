@@ -3,7 +3,7 @@ package lists
 import (
 	"testing"
 
-	"github.com/Aize-Public/forego/test"
+	"github.com/ohait/forego/test"
 )
 
 func TestSplit(t *testing.T) {

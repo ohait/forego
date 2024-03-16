@@ -3,10 +3,10 @@ package ws
 import (
 	"io"
 
-	"github.com/Aize-Public/forego/ctx"
-	"github.com/Aize-Public/forego/ctx/log"
-	"github.com/Aize-Public/forego/enc"
 	"github.com/google/uuid"
+	"github.com/ohait/forego/ctx"
+	"github.com/ohait/forego/ctx/log"
+	"github.com/ohait/forego/enc"
 )
 
 type TestClient struct {

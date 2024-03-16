@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Aize-Public/forego/ctx"
+	"github.com/ohait/forego/ctx"
 )
 
 type LRU[K comparable, V any] struct {

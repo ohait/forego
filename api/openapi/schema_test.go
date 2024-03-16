@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Aize-Public/forego/api/openapi"
-	"github.com/Aize-Public/forego/enc"
-	"github.com/Aize-Public/forego/test"
+	"github.com/ohait/forego/api/openapi"
+	"github.com/ohait/forego/enc"
+	"github.com/ohait/forego/test"
 )
 
 type Obj struct {
@@ -66,11 +66,11 @@ func TestSchema(t *testing.T) {
 	sc, err := s.SchemaFromType(c, reflect.TypeOf(Obj{}), nil)
 	test.NoError(t, err)
 	t.Logf("Schema: %s", enc.JSON{Indent: true}.Encode(c, enc.MustMarshal(c, sc)))
-	test.EqualsGo(t, "#/components/schemas/github.com_Aize-Public_forego_api_openapi_test_Obj", sc.AllOf[0].Reference)
+	test.EqualsGo(t, "#/components/schemas/github.com_ohait_forego_api_openapi_test_Obj", sc.AllOf[0].Reference)
 	t.Logf("Components.Schemas: %s", enc.JSON{Indent: true}.Encode(c, enc.MustMarshal(c, s.Components.Schemas)))
 
-	objSchema := s.Components.Schemas["github.com_Aize-Public_forego_api_openapi_test_Obj"]
-	subSchema := s.Components.Schemas["github.com_Aize-Public_forego_api_openapi_test_Sub"]
+	objSchema := s.Components.Schemas["github.com_ohait_forego_api_openapi_test_Obj"]
+	subSchema := s.Components.Schemas["github.com_ohait_forego_api_openapi_test_Sub"]
 	test.NotNil(t, objSchema)
 	test.NotNil(t, subSchema)
 
@@ -89,7 +89,7 @@ func TestSchema(t *testing.T) {
 		enc.Map{"string": enc.String("b"), "timestamp": enc.String("2009-11-10T23:00:00Z")}},
 		objSchema.Properties["list"].Example)
 	test.NotNil(t, objSchema.Properties["list"].Items)
-	test.EqualsGo(t, "#/components/schemas/github.com_Aize-Public_forego_api_openapi_test_Sub", objSchema.Properties["list"].Items.AllOf[0].Reference)
+	test.EqualsGo(t, "#/components/schemas/github.com_ohait_forego_api_openapi_test_Sub", objSchema.Properties["list"].Items.AllOf[0].Reference)
 
 	test.EqualsGo(t, "object", subSchema.Type)
 	test.EqualsGo(t, "openapi_test.Sub", subSchema.Format)

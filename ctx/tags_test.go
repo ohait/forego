@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/Aize-Public/forego/ctx"
-	"github.com/Aize-Public/forego/test"
+	"github.com/ohait/forego/ctx"
+	"github.com/ohait/forego/test"
 )
 
 func TestTags(t *testing.T) {

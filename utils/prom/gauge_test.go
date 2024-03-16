@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/Aize-Public/forego/test"
-	"github.com/Aize-Public/forego/utils/prom"
+	"github.com/ohait/forego/test"
+	"github.com/ohait/forego/utils/prom"
 )
 
 func TestGauge(t *testing.T) {

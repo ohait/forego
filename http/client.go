@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/Aize-Public/forego/api"
-	"github.com/Aize-Public/forego/ctx"
-	"github.com/Aize-Public/forego/ctx/log"
+	"github.com/ohait/forego/api"
+	"github.com/ohait/forego/ctx"
+	"github.com/ohait/forego/ctx/log"
 )
 
 // TODO circuit breaker!

@@ -3,11 +3,11 @@ package main
 import (
 	"os"
 
-	"github.com/Aize-Public/forego/ctx"
-	"github.com/Aize-Public/forego/ctx/log"
-	"github.com/Aize-Public/forego/example"
-	"github.com/Aize-Public/forego/http"
-	"github.com/Aize-Public/forego/shutdown"
+	"github.com/ohait/forego/ctx"
+	"github.com/ohait/forego/ctx/log"
+	"github.com/ohait/forego/example"
+	"github.com/ohait/forego/http"
+	"github.com/ohait/forego/shutdown"
 )
 
 func main() {

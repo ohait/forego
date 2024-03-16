@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Aize-Public/forego/ctx"
-	"github.com/Aize-Public/forego/utils/ast"
+	"github.com/ohait/forego/ctx"
+	"github.com/ohait/forego/utils/ast"
 )
 
 func NoError(t *testing.T, err error) {

@@ -4,9 +4,9 @@ import (
 	"net/url"
 	"reflect"
 
-	"github.com/Aize-Public/forego/api/openapi"
-	"github.com/Aize-Public/forego/ctx"
-	"github.com/Aize-Public/forego/ctx/log"
+	"github.com/ohait/forego/api/openapi"
+	"github.com/ohait/forego/ctx"
+	"github.com/ohait/forego/ctx/log"
 )
 
 // each type of object T has its own handler

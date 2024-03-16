@@ -1,6 +1,6 @@
 package storage
 
-import "github.com/Aize-Public/forego/enc"
+import "github.com/ohait/forego/enc"
 
 type Filter struct {
 	Field string // the field we are checking

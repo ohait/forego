@@ -3,8 +3,8 @@ package sync_test
 import (
 	"testing"
 
-	"github.com/Aize-Public/forego/test"
-	"github.com/Aize-Public/forego/utils/sync"
+	"github.com/ohait/forego/test"
+	"github.com/ohait/forego/utils/sync"
 )
 
 func TestMapNil(t *testing.T) {

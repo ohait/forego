@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/Aize-Public/forego/ctx"
-	"github.com/Aize-Public/forego/ctx/log"
+	"github.com/ohait/forego/ctx"
+	"github.com/ohait/forego/ctx/log"
 )
 
 func Context(t *testing.T) ctx.C {

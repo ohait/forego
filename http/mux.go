@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Aize-Public/forego/api/openapi"
-	"github.com/Aize-Public/forego/ctx"
-	"github.com/Aize-Public/forego/ctx/log"
-	"github.com/Aize-Public/forego/utils"
+	"github.com/ohait/forego/api/openapi"
+	"github.com/ohait/forego/ctx"
+	"github.com/ohait/forego/ctx/log"
+	"github.com/ohait/forego/utils"
 )
 
 func (this *Server) HandleFunc(path string, h http.HandlerFunc) *openapi.Path {

@@ -6,11 +6,11 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/Aize-Public/forego/api"
-	"github.com/Aize-Public/forego/ctx"
-	"github.com/Aize-Public/forego/ctx/log"
-	"github.com/Aize-Public/forego/http"
-	"github.com/Aize-Public/forego/test"
+	"github.com/ohait/forego/api"
+	"github.com/ohait/forego/ctx"
+	"github.com/ohait/forego/ctx/log"
+	"github.com/ohait/forego/http"
+	"github.com/ohait/forego/test"
 )
 
 type UID string

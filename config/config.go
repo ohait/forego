@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Aize-Public/forego/ctx"
+	"github.com/ohait/forego/ctx"
 )
 
 func Must[T any](c ctx.C, cfg T, f func(string) string) T {

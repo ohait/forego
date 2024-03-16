@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/Aize-Public/forego/ctx"
+	"github.com/ohait/forego/ctx"
 )
 
 func NewErrorf(c ctx.C, code int, f string, args ...any) Error {

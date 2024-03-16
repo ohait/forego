@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"net/http"
 
-	"github.com/Aize-Public/forego/api"
-	"github.com/Aize-Public/forego/api/openapi"
-	"github.com/Aize-Public/forego/ctx"
-	"github.com/Aize-Public/forego/ctx/log"
-	"github.com/Aize-Public/forego/enc"
+	"github.com/ohait/forego/api"
+	"github.com/ohait/forego/api/openapi"
+	"github.com/ohait/forego/ctx"
+	"github.com/ohait/forego/ctx/log"
+	"github.com/ohait/forego/enc"
 )
 
 type Doable interface {

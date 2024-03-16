@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/Aize-Public/forego/utils/sync"
+	"github.com/ohait/forego/utils/sync"
 )
 
 type Counter struct {

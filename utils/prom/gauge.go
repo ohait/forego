@@ -5,7 +5,7 @@ import (
 	"io"
 	"sync/atomic"
 
-	"github.com/Aize-Public/forego/utils/sync"
+	"github.com/ohait/forego/utils/sync"
 )
 
 type gaugeEntry interface {

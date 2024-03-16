@@ -3,9 +3,9 @@ package ws_test
 import (
 	"testing"
 
-	"github.com/Aize-Public/forego/ctx"
-	"github.com/Aize-Public/forego/http/ws"
-	"github.com/Aize-Public/forego/test"
+	"github.com/ohait/forego/ctx"
+	"github.com/ohait/forego/http/ws"
+	"github.com/ohait/forego/test"
 )
 
 type Example struct {

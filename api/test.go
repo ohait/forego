@@ -3,7 +3,7 @@ package api
 import (
 	"testing"
 
-	"github.com/Aize-Public/forego/test"
+	"github.com/ohait/forego/test"
 )
 
 // TODO(oha): should we do marshalling here to be safe?

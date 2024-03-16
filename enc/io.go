@@ -3,7 +3,7 @@ package enc
 import (
 	"io"
 
-	"github.com/Aize-Public/forego/ctx"
+	"github.com/ohait/forego/ctx"
 )
 
 type Writer interface {

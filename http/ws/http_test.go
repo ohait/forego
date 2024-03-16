@@ -4,10 +4,10 @@ import (
 	"io"
 	"testing"
 
-	"github.com/Aize-Public/forego/enc"
-	"github.com/Aize-Public/forego/http"
-	"github.com/Aize-Public/forego/http/ws"
-	"github.com/Aize-Public/forego/test"
+	"github.com/ohait/forego/enc"
+	"github.com/ohait/forego/http"
+	"github.com/ohait/forego/http/ws"
+	"github.com/ohait/forego/test"
 	"golang.org/x/net/websocket"
 )
 

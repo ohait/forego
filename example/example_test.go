@@ -3,9 +3,9 @@ package example_test
 import (
 	"testing"
 
-	"github.com/Aize-Public/forego/ctx"
-	"github.com/Aize-Public/forego/ctx/log"
-	"github.com/Aize-Public/forego/test"
+	"github.com/ohait/forego/ctx"
+	"github.com/ohait/forego/ctx/log"
+	"github.com/ohait/forego/test"
 )
 
 func lib(c ctx.C) {

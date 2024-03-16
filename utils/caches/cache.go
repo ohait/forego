@@ -1,7 +1,7 @@
 package caches
 
 import (
-	"github.com/Aize-Public/forego/ctx"
+	"github.com/ohait/forego/ctx"
 )
 
 type Cache[K comparable, V any] interface {

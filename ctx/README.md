@@ -19,7 +19,7 @@ It also make it coherent when using other libraries, since they will still carry
 All logging is `JSONL`, e.g.:
 
 ```
-{"level":"debug","src":"github.com/Aize-Public/forego/http/server.go:83","time":"2023-06-01T07:18:31.007411033+02:00","message":"listening to :8080","tags":{"service":"viewer"}}
+{"level":"debug","src":"github.com/ohait/forego/http/server.go:83","time":"2023-06-01T07:18:31.007411033+02:00","message":"listening to :8080","tags":{"service":"viewer"}}
 ```
 
 May be wise to use a log viewer like `https://github.com/ohait/jl`   

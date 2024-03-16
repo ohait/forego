@@ -3,7 +3,7 @@ package shutdown
 import (
 	"errors"
 
-	"github.com/Aize-Public/forego/ctx"
+	"github.com/ohait/forego/ctx"
 )
 
 // Use to signal that an operation can't be executed because the system is shutting down

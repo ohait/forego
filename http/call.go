@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Aize-Public/forego/ctx"
-	"github.com/Aize-Public/forego/ctx/log"
-	"github.com/Aize-Public/forego/utils"
+	"github.com/ohait/forego/ctx"
+	"github.com/ohait/forego/ctx/log"
+	"github.com/ohait/forego/utils"
 )
 
 type CallHandler struct {

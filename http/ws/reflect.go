@@ -4,9 +4,9 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/Aize-Public/forego/ctx"
-	"github.com/Aize-Public/forego/ctx/log"
-	"github.com/Aize-Public/forego/enc"
+	"github.com/ohait/forego/ctx"
+	"github.com/ohait/forego/ctx/log"
+	"github.com/ohait/forego/enc"
 )
 
 type builder struct {
@@ -39,7 +39,7 @@ func (this builder) build(c C, req enc.Node) any {
 		c.ch.byPath[method.name] = func(c C, req enc.Node) error {
 			err := method.call(c, v, req)
 			if err != nil {
-				c.ch.Conn.Send(c, Frame{
+				_ = c.ch.Conn.Send(c, Frame{
 					Channel: c.ch.ID,
 					Path:    method.name,
 					Type:    "return",
@@ -47,12 +47,11 @@ func (this builder) build(c C, req enc.Node) any {
 				})
 				return ctx.NewErrorf(c, "ws[%s|%s]: %v", c.ch.ID, method.name, err)
 			}
-			c.ch.Conn.Send(c, Frame{
+			return c.ch.Conn.Send(c, Frame{
 				Channel: c.ch.ID,
 				Path:    method.name,
 				Type:    "return",
 			})
-			return nil
 		}
 	}
 

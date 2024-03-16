@@ -3,7 +3,7 @@ package enc
 import (
 	"reflect"
 
-	"github.com/Aize-Public/forego/ctx"
+	"github.com/ohait/forego/ctx"
 )
 
 type Nil struct{}

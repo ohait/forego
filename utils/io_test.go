@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Aize-Public/forego/ctx"
-	"github.com/Aize-Public/forego/test"
-	"github.com/Aize-Public/forego/utils"
+	"github.com/ohait/forego/ctx"
+	"github.com/ohait/forego/test"
+	"github.com/ohait/forego/utils"
 )
 
 func TestReadAll(t *testing.T) {

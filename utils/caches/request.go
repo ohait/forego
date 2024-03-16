@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Aize-Public/forego/ctx"
+	"github.com/ohait/forego/ctx"
 )
 
 type RequestCache[K comparable, V any] struct {

@@ -4,9 +4,9 @@ import (
 	"io"
 	"testing"
 
-	"github.com/Aize-Public/forego/ctx"
-	"github.com/Aize-Public/forego/http"
-	"github.com/Aize-Public/forego/test"
+	"github.com/ohait/forego/ctx"
+	"github.com/ohait/forego/http"
+	"github.com/ohait/forego/test"
 )
 
 func TestError(t *testing.T) {

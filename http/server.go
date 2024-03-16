@@ -12,11 +12,11 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/Aize-Public/forego/api/openapi"
-	"github.com/Aize-Public/forego/ctx"
-	"github.com/Aize-Public/forego/ctx/log"
-	"github.com/Aize-Public/forego/enc"
-	"github.com/Aize-Public/forego/shutdown"
+	"github.com/ohait/forego/api/openapi"
+	"github.com/ohait/forego/ctx"
+	"github.com/ohait/forego/ctx/log"
+	"github.com/ohait/forego/enc"
+	"github.com/ohait/forego/shutdown"
 )
 
 type Server struct {

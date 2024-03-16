@@ -4,8 +4,8 @@ import (
 	"io"
 	"reflect"
 
-	"github.com/Aize-Public/forego/ctx"
-	"github.com/Aize-Public/forego/enc"
+	"github.com/ohait/forego/ctx"
+	"github.com/ohait/forego/enc"
 )
 
 // implementation for all the client/server request/responses using json

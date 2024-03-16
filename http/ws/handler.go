@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/Aize-Public/forego/ctx"
-	"github.com/Aize-Public/forego/ctx/log"
-	"github.com/Aize-Public/forego/enc"
-	"github.com/Aize-Public/forego/shutdown"
-	"github.com/Aize-Public/forego/utils/sync"
+	"github.com/ohait/forego/ctx"
+	"github.com/ohait/forego/ctx/log"
+	"github.com/ohait/forego/enc"
+	"github.com/ohait/forego/shutdown"
+	"github.com/ohait/forego/utils/sync"
 	"golang.org/x/net/websocket"
 )
 

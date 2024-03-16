@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/Aize-Public/forego/utils/ast"
+	"github.com/ohait/forego/utils/ast"
 )
 
 // var ok = "✅  "

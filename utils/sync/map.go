@@ -3,8 +3,8 @@ package sync
 import (
 	"sync"
 
-	"github.com/Aize-Public/forego/ctx"
-	"github.com/Aize-Public/forego/enc"
+	"github.com/ohait/forego/ctx"
+	"github.com/ohait/forego/enc"
 )
 
 type Map[K comparable, T any] struct {

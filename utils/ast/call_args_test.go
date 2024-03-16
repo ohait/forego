@@ -4,9 +4,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/Aize-Public/forego/ctx"
-	"github.com/Aize-Public/forego/test"
-	"github.com/Aize-Public/forego/utils/ast"
+	"github.com/ohait/forego/ctx"
+	"github.com/ohait/forego/test"
+	"github.com/ohait/forego/utils/ast"
 )
 
 func testCall(c ctx.C, b any) (*ast.Call, string, error) {

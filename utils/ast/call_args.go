@@ -8,8 +8,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/Aize-Public/forego/ctx"
-	util "github.com/Aize-Public/forego/utils"
+	"github.com/ohait/forego/ctx"
+	util "github.com/ohait/forego/utils"
 )
 
 type Call struct {

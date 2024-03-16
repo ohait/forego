@@ -3,8 +3,8 @@ package config_test
 import (
 	"testing"
 
-	"github.com/Aize-Public/forego/config"
-	"github.com/Aize-Public/forego/test"
+	"github.com/ohait/forego/config"
+	"github.com/ohait/forego/test"
 )
 
 func TestConfig(t *testing.T) {

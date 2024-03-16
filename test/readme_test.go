@@ -3,7 +3,7 @@ package test_test
 import (
 	"testing"
 
-	"github.com/Aize-Public/forego/test"
+	"github.com/ohait/forego/test"
 )
 
 func foo() error       { return nil }

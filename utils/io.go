@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"io"
 
-	"github.com/Aize-Public/forego/ctx"
+	"github.com/ohait/forego/ctx"
 )
 
 // ReadAll() but honors the ctx.C cancel

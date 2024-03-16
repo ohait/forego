@@ -5,8 +5,8 @@ import (
 
 	gohttp "net/http"
 
-	"github.com/Aize-Public/forego/http"
-	"github.com/Aize-Public/forego/test"
+	"github.com/ohait/forego/http"
+	"github.com/ohait/forego/test"
 )
 
 func TestServer(t *testing.T) {

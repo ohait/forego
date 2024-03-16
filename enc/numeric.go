@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Aize-Public/forego/ctx"
+	"github.com/ohait/forego/ctx"
 )
 
 type Numeric interface {

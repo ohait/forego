@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Aize-Public/forego/test"
-	"github.com/Aize-Public/forego/utils/lists"
+	"github.com/ohait/forego/test"
+	"github.com/ohait/forego/utils/lists"
 )
 
 func TestPerm(t *testing.T) {

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Aize-Public/forego/utils/prom"
+	"github.com/ohait/forego/utils/prom"
 )
 
 var Metrics = struct {

@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/Aize-Public/forego/enc"
-	"github.com/Aize-Public/forego/test"
+	"github.com/ohait/forego/enc"
+	"github.com/ohait/forego/test"
 )
 
 // Empty json.RawMessage should cause error in encoding/json, but not in enc.

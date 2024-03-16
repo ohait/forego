@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/Aize-Public/forego/utils/ast"
+	"github.com/ohait/forego/utils/ast"
 )
 
 func EqualsType(t *testing.T, expect, got any) {

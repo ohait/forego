@@ -5,9 +5,9 @@ import (
 	nprof "net/http/pprof"
 	"runtime/pprof"
 
-	"github.com/Aize-Public/forego/ctx"
-	"github.com/Aize-Public/forego/ctx/log"
-	"github.com/Aize-Public/forego/utils/prom"
+	"github.com/ohait/forego/ctx"
+	"github.com/ohait/forego/ctx/log"
+	"github.com/ohait/forego/utils/prom"
 )
 
 func (this *Server) SetupPrometheus(c ctx.C, path string) {

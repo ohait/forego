@@ -3,9 +3,9 @@ package caches_test
 import (
 	"testing"
 
-	"github.com/Aize-Public/forego/ctx"
-	"github.com/Aize-Public/forego/test"
-	"github.com/Aize-Public/forego/utils/caches"
+	"github.com/ohait/forego/ctx"
+	"github.com/ohait/forego/test"
+	"github.com/ohait/forego/utils/caches"
 )
 
 func TestLRU(t *testing.T) {

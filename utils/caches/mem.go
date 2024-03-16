@@ -3,7 +3,7 @@ package caches
 import (
 	"sync"
 
-	"github.com/Aize-Public/forego/ctx"
+	"github.com/ohait/forego/ctx"
 )
 
 type memCache[K comparable, V any] struct {

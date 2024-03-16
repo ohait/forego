@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Aize-Public/forego/ctx/log"
+	"github.com/ohait/forego/ctx/log"
 )
 
 type Mutex struct {

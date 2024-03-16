@@ -7,10 +7,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Aize-Public/forego/ctx"
-	"github.com/Aize-Public/forego/ctx/log"
-	"github.com/Aize-Public/forego/test"
-	"github.com/Aize-Public/forego/utils/prom"
+	"github.com/ohait/forego/ctx"
+	"github.com/ohait/forego/ctx/log"
+	"github.com/ohait/forego/test"
+	"github.com/ohait/forego/utils/prom"
 )
 
 func TestHttp(t *testing.T) {

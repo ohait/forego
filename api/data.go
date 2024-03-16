@@ -3,7 +3,7 @@ package api
 import (
 	"reflect"
 
-	"github.com/Aize-Public/forego/ctx"
+	"github.com/ohait/forego/ctx"
 )
 
 // the client request object used to Marshal a request to a server

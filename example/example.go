@@ -3,8 +3,8 @@ package example
 import (
 	"sync"
 
-	"github.com/Aize-Public/forego/api"
-	"github.com/Aize-Public/forego/ctx"
+	"github.com/ohait/forego/api"
+	"github.com/ohait/forego/ctx"
 )
 
 type Store struct {

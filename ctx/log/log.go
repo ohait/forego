@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Aize-Public/forego/ctx"
+	"github.com/ohait/forego/ctx"
 )
 
 type Line struct {

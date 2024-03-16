@@ -3,8 +3,8 @@ package log_test
 import (
 	"testing"
 
-	"github.com/Aize-Public/forego/ctx/log"
-	"github.com/Aize-Public/forego/test"
+	"github.com/ohait/forego/ctx/log"
+	"github.com/ohait/forego/test"
 )
 
 func TestRedacted(t *testing.T) {

@@ -7,8 +7,8 @@ import (
 	"testing"
 	"unicode/utf8"
 
-	"github.com/Aize-Public/forego/enc"
-	"github.com/Aize-Public/forego/utils/ast"
+	"github.com/ohait/forego/enc"
+	"github.com/ohait/forego/utils/ast"
 )
 
 // helper, returns the jsonish value as string, or an error as string

@@ -3,8 +3,8 @@ package utils_test
 import (
 	"testing"
 
-	"github.com/Aize-Public/forego/test"
-	"github.com/Aize-Public/forego/utils"
+	"github.com/ohait/forego/test"
+	"github.com/ohait/forego/utils"
 )
 
 func outer(t *testing.T) []string {

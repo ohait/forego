@@ -1,6 +1,6 @@
 package api
 
-import "github.com/Aize-Public/forego/ctx"
+import "github.com/ohait/forego/ctx"
 
 type Op interface {
 	Do(c ctx.C) error

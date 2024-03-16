@@ -7,7 +7,7 @@ import (
 	"runtime/debug"
 	"time"
 
-	"github.com/Aize-Public/forego/utils/sync"
+	"github.com/ohait/forego/utils/sync"
 )
 
 var registry = struct {
