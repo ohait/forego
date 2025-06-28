@@ -7,7 +7,6 @@ Go framework to simplify testing, http/ws API, authentication/authorization, etc
 Some subfolders have a README with more details:
 
 * [api](./api/)
-* [test](./test/)
 * [enc](./enc/)
 * [http](./http/)
 * [http/ws](./http/ws/)
@@ -18,9 +17,9 @@ Some subfolders have a README with more details:
 
 ## `test`
 
-Having a good testing library, means less to write, and better results.
+Having a good testing library means less to write and better results.
 
-All the tests will generate a log message when they succeed based on the arguments, most of the time this is enough to understand the test.
+All tests generate a log message when they succeed, based on the arguments. Most of the time this is enough to understand the test.
 
 E.g. with this code:
 
@@ -29,7 +28,7 @@ E.g. with this code:
   test.NoError(t, err)
 ```
 
-The following log message is generated:   
+The following log message is generated:
 
 ```go
     my_test.go:123 ok: foo(123)
@@ -51,7 +50,7 @@ It will log a message like:
 ok: everything > 7*3
 ```
 
-In the case of error, it will print what was the function assigning to the error
+If there is an error, it prints the function that returned it
 
 
 
@@ -61,7 +60,7 @@ Framework to automatically create bindings and documentation for APIs:
 * no more test of bindings, just test the business logic
 * OpenAPI automatically generated
 * tight integration with http, WebSocket and other streaming libraries
-* simple and no boiler plate
+* simple and no boilerplate
 
 TODO
 
