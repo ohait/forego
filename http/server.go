@@ -24,7 +24,7 @@ type Server struct {
 	h   http.Handler
 
 	// called when a request is done, by default it logs and generate metrics
-	//OnResponse func(Stat)
+	// OnResponse func(Stat)
 
 	ready int32
 
@@ -105,7 +105,7 @@ func (this Server) Listen(c ctx.C, addr string) (*net.TCPAddr, error) {
 			// TODO(oha): do we need to setup a limiter? if so, this is to know when any hijacker kicks in
 		},
 		ReadTimeout: 30 * time.Second,
-		//WriteTimeout: 30 * time.Second, // better let the implementation decide
+		// WriteTimeout: 30 * time.Second, // better let the implementation decide
 		Handler: this.h,
 	}
 	if addr == "" {
@@ -157,9 +157,19 @@ func (this *listener) Accept() (net.Conn, error) {
 	return this.Listener.Accept()
 }
 
+// Setup the given streaming function, ignore the method, request body can be nil
+func (this *Server) HandleStream(path string, f StreamFunc) *openapi.PathItem {
+	this.handleStream(path, f)
+	return this.makePathItem(path)
+}
+
 // Setup the given request as JSON, and add it to `s.OpenAPI` for the given path as POST, returns the openapi.PathItem
 func (this *Server) HandleRequest(path string, f func(c ctx.C, in []byte, r *http.Request) ([]byte, error)) *openapi.PathItem {
 	this.handleRequest(path, f)
+	return this.makePathItem(path)
+}
+
+func (this *Server) makePathItem(path string) *openapi.PathItem {
 	pi := &openapi.PathItem{
 		RequestBody: &openapi.RequestBody{
 			Content: map[string]openapi.MediaType{
@@ -186,6 +196,58 @@ func (this *Server) HandleRequest(path string, f func(c ctx.C, in []byte, r *htt
 		Post: pi,
 	}
 	return pi
+}
+
+// a streaming function with an option request body `in` and a function which sends chunks to the client
+type StreamFunc func(c ctx.C, in io.Reader, emit func(c ctx.C, obj any) error) error
+
+func (this *Server) handleStream(path string, f StreamFunc) {
+	this.mux.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
+		c := r.Context()
+		flusher, ok := w.(http.Flusher)
+		if !ok {
+			log.Errorf(c, "can't cast to http.Flusher: %T", w)
+			w.WriteHeader(500)
+			return
+		}
+		sent := 0
+		if r.Body != nil {
+			defer r.Body.Close()
+		}
+		err := f(c, r.Body, func(c ctx.C, obj any) error {
+			if c.Err() != nil {
+				return c.Err()
+			}
+			json, err := enc.MarshalJSON(c, obj)
+			if err != nil {
+				return err
+			}
+			sent += len(json) + 1
+			w.Write(json)
+			w.Write([]byte("\n"))
+			flusher.Flush()
+			return nil
+		})
+		if err == nil {
+			if sent == 0 {
+				w.WriteHeader(204)
+			}
+			return
+		}
+		// error handling
+		if sent == 0 {
+			log.Warnf(c, "error before streaming: %v", err)
+			switch err := err.(type) {
+			case Error:
+				w.WriteHeader(err.Code)
+				w.Write([]byte(err.Err.Error()))
+			default:
+				w.WriteHeader(500) // TODO is there a way to send a different code?
+			}
+			return
+		}
+		log.Errorf(c, "error while streaming: %v", err)
+	})
 }
 
 func (this *Server) handleRequest(path string, f func(c ctx.C, in []byte, r *http.Request) ([]byte, error)) {

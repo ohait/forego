@@ -80,10 +80,12 @@ type JSON []byte
 func (this JSON) MarshalJSON() ([]byte, error) {
 	return this, nil
 }
+
 func (this *JSON) UnmarshalJSON(j []byte) error {
 	*this = j
 	return nil
 }
+
 func (this JSON) String() string {
 	return string(this)
 }

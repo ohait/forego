@@ -32,8 +32,7 @@ func (this Line) JSON() string {
 	return string(j)
 }
 
-type loggerKey struct {
-}
+type loggerKey struct{}
 
 type loggerValue struct {
 	helper func()

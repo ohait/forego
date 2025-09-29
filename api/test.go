@@ -3,6 +3,7 @@ package api
 import (
 	"testing"
 
+	"github.com/ohait/forego/ctx"
 	"github.com/ohait/forego/test"
 )
 
@@ -37,4 +38,25 @@ func Test[T Op](t *testing.T, op T) T {
 		test.Fail(t, "%+v", err)
 	}
 	return op
+}
+
+func TestStream[T StreamingOp](t *testing.T, op T, cb func(c ctx.C, obj any) error) {
+	c := test.Context(t)
+	t.Helper()
+	h, err := NewHandler(c, op)
+	test.NoError(t, err)
+
+	j := &JSON{}
+	err = h.Client().Send(c, op, j)
+	if err != nil {
+		test.Fail(t, "%+v", err)
+	}
+	t.Logf("Test[%T](%s)...", op, j.Data)
+	req, err := h.Server().Recv(c, j)
+	if err != nil {
+		test.Fail(t, "%+v", err)
+	}
+
+	err = req.Stream(test.Context(t), cb)
+	test.NoError(t, err)
 }

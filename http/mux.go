@@ -56,6 +56,7 @@ type responseHijacker struct {
 }
 
 var _ http.Hijacker = &responseHijacker{}
+var _ http.Flusher = responseHijacker{}
 
 func (r *response) WriteHeader(code int) {
 	if r.code != 0 {
@@ -72,6 +73,10 @@ func (r *response) Write(b []byte) (int, error) {
 		r.code = 200
 	}
 	return r.ResponseWriter.Write(b)
+}
+
+func (r responseHijacker) Flush() {
+	r.hijacker.(http.Flusher).Flush()
 }
 
 func (r responseHijacker) Hijack() (conn net.Conn, rw *bufio.ReadWriter, err error) {
