@@ -2,6 +2,7 @@ package http
 
 import (
 	"bytes"
+	"io"
 	"net/http"
 
 	"github.com/ohait/forego/api"
@@ -12,18 +13,63 @@ import (
 )
 
 type Doable interface {
-	Do(ctx.C) error
+	api.Op
 }
 
-func (s *Server) MustRegisterAPI(c ctx.C, obj Doable) *openapi.PathItem {
-	pi, err := s.RegisterAPI(c, obj)
+type Streamable interface {
+	api.StreamingOp
+}
+
+func (s *Server) MustRegisterStreamingAPI(c ctx.C, path string, obj Streamable) *openapi.PathItem {
+	pi, err := s.RegisterStreamingAPI(c, path, obj)
 	if err != nil {
 		panic(err)
 	}
 	return pi
 }
 
-func (s *Server) RegisterAPI(c ctx.C, obj Doable) (*openapi.PathItem, error) {
+func (s *Server) MustRegisterAPI(c ctx.C, path string, obj Doable) *openapi.PathItem {
+	pi, err := s.RegisterAPI(c, path, obj)
+	if err != nil {
+		panic(err)
+	}
+	return pi
+}
+
+func (s *Server) RegisterStreamingAPI(c ctx.C, path string, obj Streamable) (*openapi.PathItem, error) {
+	handler, err := api.NewServer(c, obj)
+	if err != nil {
+		return nil, err
+	}
+	f := func(c ctx.C, in io.Reader, out func(ctx.C, any) error) error {
+		req := &api.JSON{}
+		if in != nil {
+			err := req.ReadFrom(c, in)
+			if err != nil {
+				return ctx.NewErrorf(c, "can't read request body: %v", err)
+			}
+		} else {
+			log.Infof(c, "can/t get body: %v", err)
+		}
+		// TODO auth
+
+		obj, err := handler.Recv(c, req)
+		if err != nil {
+			return NewErrorf(c, 400, "%v", err) // receive errors are always 4xx (TODO how to handle 403?)
+		}
+		return obj.Stream(c, out)
+	}
+
+	if path == "" {
+		return nil, ctx.NewErrorf(c, "no path to register for %T", obj)
+	}
+
+	log.Debugf(c, "registering to %q", path)
+	s.handleStream(path, f)
+	return handler.UpdateOpenAPI(c, s.OpenAPI, path)
+}
+
+func (s *Server) RegisterAPI(c ctx.C, path string, obj Doable) (*openapi.PathItem, error) {
 	handler, err := api.NewServer(c, obj)
 	if err != nil {
 		return nil, err
@@ -49,7 +95,7 @@ func (s *Server) RegisterAPI(c ctx.C, obj Doable) (*openapi.PathItem, error) {
 		if err != nil {
 			return nil, err
 		}
-		//log.Debugf(c, "API %+v", obj)
+		// log.Debugf(c, "API %+v", obj)
 
 		res := &api.JSON{}
 		err = handler.Send(c, obj, res)
@@ -61,14 +107,11 @@ func (s *Server) RegisterAPI(c ctx.C, obj Doable) (*openapi.PathItem, error) {
 		return out, nil
 	}
 
-	urls := handler.URLs()
-	if len(urls) == 0 {
-		return nil, ctx.NewErrorf(c, "no URL to register for %T", obj)
+	if path == "" {
+		return nil, ctx.NewErrorf(c, "no path to register for %T", obj)
 	}
 
-	for _, u := range handler.URLs() {
-		log.Debugf(c, "registering to %q", u.Path)
-		s.handleRequest(u.Path, f)
-	}
-	return handler.UpdateOpenAPI(c, s.OpenAPI)
+	log.Debugf(c, "registering to %q", path)
+	s.handleRequest(path, f)
+	return handler.UpdateOpenAPI(c, s.OpenAPI, path)
 }

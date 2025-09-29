@@ -72,7 +72,7 @@ func (this Client) Do(r *http.Request) (*http.Response, error) {
 	}
 }
 
-func (this Client) API(c ctx.C, obj Doable) error {
+func (this Client) API(c ctx.C, obj Doable, path string) error {
 	c = ctx.WithTag(c, "api", fmt.Sprintf("client %T", obj))
 	h, err := api.NewClient(c, obj)
 	if err != nil {
@@ -89,12 +89,15 @@ func (this Client) API(c ctx.C, obj Doable) error {
 			return ctx.NewErrorf(c, "can't marshal %T: %w", obj, err)
 		}
 
-		u := h.URL()
+		if path == "" {
+			return ctx.NewErrorf(c, "no path provided for %T", obj)
+		}
+		u, err := url.Parse(path)
+		if err != nil {
+			return ctx.NewErrorf(c, "can't parse path %q: %w", path, err)
+		}
 		if this.BaseUrl != nil {
-			u, err = this.BaseUrl.Parse(u.String())
-			if err != nil {
-				return ctx.NewErrorf(c, "can't rebase url: %w", err)
-			}
+			u = this.BaseUrl.ResolveReference(u)
 		}
 
 		req, err := NewRequest(c, "POST", u.String(), bytes.NewBuffer(j))

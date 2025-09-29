@@ -21,8 +21,8 @@ func main() {
 			"true": true,
 		},
 	}
-	s.RegisterAPI(c, &example.Get{Store: &store})
-	s.RegisterAPI(c, &example.Set{Store: &store})
+	s.RegisterAPI(c, "/api/v1/get", &example.Get{Store: &store})
+	s.RegisterAPI(c, "/api/v1/set", &example.Set{Store: &store})
 
 	addr, err := s.Listen(c, "127.0.0.1:0")
 	if err != nil {

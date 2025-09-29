@@ -1,7 +1,6 @@
 package api
 
 import (
-	"net/url"
 	"reflect"
 
 	"github.com/ohait/forego/api/openapi"
@@ -11,8 +10,7 @@ import (
 
 // each type of object T has its own handler
 type Handler[T any] struct {
-	typ  reflect.Type
-	urls []*url.URL
+	typ reflect.Type
 
 	auth *field
 	init map[int]reflect.Value
@@ -73,10 +71,7 @@ func NewHandler[T any](c ctx.C, init T) (Handler[T], error) {
 		if tag.out {
 			this.out = append(this.out, f)
 		}
-		if tag.url != nil {
-			this.urls = append(this.urls, tag.url)
-		}
-		if !tag.in && !tag.out && tag.url == nil {
+		if !tag.in && !tag.out {
 			v := initV.Field(f.i)
 			if !v.IsZero() {
 				this.init[f.i] = v
@@ -88,37 +83,11 @@ func NewHandler[T any](c ctx.C, init T) (Handler[T], error) {
 	return this, nil
 }
 
-// return the path of the first url, or the object name if no url is given
-func (this *Handler[T]) Path() string {
-	if len(this.urls) > 0 {
-		return this.urls[0].Path
-	}
-	return this.typ.Name()
-}
-
 func (this *Handler[T]) Type() reflect.Type {
 	return this.typ
 }
 
-func (this *Handler[T]) URL() *url.URL {
-	if len(this.urls) > 0 {
-		return this.urls[0]
-	}
-	return nil
-}
-
-func (this *Handler[T]) Paths() []string {
-	if len(this.urls) == 0 {
-		return []string{this.typ.Name()}
-	}
-	var out []string
-	for _, url := range this.urls {
-		out = append(out, url.Path)
-	}
-	return out
-}
-
-func (this *Handler[T]) UpdateOpenAPI(c ctx.C, o *openapi.Service) (*openapi.PathItem, error) {
+func (this *Handler[T]) UpdateOpenAPI(c ctx.C, o *openapi.Service, path string) (*openapi.PathItem, error) {
 	in := &openapi.Schema{
 		Type:       "object",
 		Format:     this.typ.Name(),
@@ -172,17 +141,11 @@ func (this *Handler[T]) UpdateOpenAPI(c ctx.C, o *openapi.Service) (*openapi.Pat
 		pi.SetJWT(this.auth.tag.required)
 	}
 
-	for _, url := range this.urls {
-		o.Paths[url.Path] = &openapi.Path{
-			Post: pi,
-		}
+	o.Paths[path] = &openapi.Path{
+		Post: pi,
 	}
 	// NOTE(oha): should we add GET if len(this.in) == 0?
 	return pi, nil
-}
-
-func (this *Handler[T]) URLs() []*url.URL {
-	return this.urls
 }
 
 func (this *Handler[T]) Server() Server[T] {

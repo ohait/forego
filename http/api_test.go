@@ -6,7 +6,6 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/ohait/forego/api"
 	"github.com/ohait/forego/ctx"
 	"github.com/ohait/forego/ctx/log"
 	"github.com/ohait/forego/http"
@@ -16,8 +15,7 @@ import (
 type UID string
 
 type Inc struct {
-	R   api.Request `url:"/inc"`
-	UID UID         `api:"auth"`
+	UID UID `api:"auth"`
 
 	Name    string `api:"in,out" json:"name"`
 	Amount  int    `api:"in" json:"amount"`
@@ -40,7 +38,7 @@ func TestAPI(t *testing.T) {
 	c := test.Context(t)
 
 	s := http.NewServer(c)
-	_, err := s.RegisterAPI(c, &Inc{
+	_, err := s.RegisterAPI(c, "/inc", &Inc{
 		State: map[string]int{},
 	})
 	test.NoError(t, err)
@@ -69,7 +67,7 @@ func TestAPI(t *testing.T) {
 			Name:   "foo",
 			Amount: 42,
 		}
-		err := cli.API(c, &op)
+		err := cli.API(c, &op, "/inc")
 		test.NoError(t, err)
 		test.EqualsGo(t, 45, op.Current)
 	}

@@ -85,10 +85,9 @@ func TestAPI(t *testing.T) {
 type UID string
 
 type WordCount struct {
-	R   api.Request `url:"/wc"`
-	UID UID         `api:"auth,required" json:"uid"`
-	Str string      `api:"in,required" json:"str"`
-	Ct  int         `api:"out" json:"ct"`
+	UID UID    `api:"auth,required" json:"uid"`
+	Str string `api:"in,required" json:"str"`
+	Ct  int    `api:"out" json:"ct"`
 }
 
 func (this *WordCount) Do(ctx.C) error {

@@ -14,8 +14,8 @@
 		return enc.MarshalJSON(c, "one")
 	})
 
-  // using API library (see forego/api/)
-	s.MustRegisterAPI(c, &MyAPI{})
+	// using API library (see forego/api/)
+	s.MustRegisterAPI(c, "/api/my", &MyAPI{})
   
   // listen to a port
 	addr, err := s.Listen(c, "127.0.0.1:0")
@@ -64,14 +64,12 @@ Helper which create a handler for the given function, which:
 
 An entry is created in `s.OpenAPI` for the given path, and the `*openapi.PathInfo` is returned for further tweaking
 
-### `RegisterAPI(c, obj)` and `MustRegisterAPI(c, obj)`
+### `RegisterAPI(c, "/path", obj)` and `MustRegisterAPI(c, "/path", obj)`
 
 ```go
-  err = s.RegisterAPI(c, &MyApi)
+  err = s.RegisterAPI(c, "/api/my", &MyApi)
 ```
 
 Uses the [api](../api/) library to parse the given object, and expose the API.
 
 It also update `s.OpenAPI` accordingly.
-
-

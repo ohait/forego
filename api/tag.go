@@ -2,7 +2,6 @@ package api
 
 import (
 	"fmt"
-	"net/url"
 	"reflect"
 	"strings"
 
@@ -15,10 +14,9 @@ type tag struct {
 	in       bool
 	out      bool
 	required bool
-	url      *url.URL
 }
 
-func tagName(c ctx.C, f reflect.StructField) string {
+func tagName(_ ctx.C, f reflect.StructField) string {
 	var name string
 	enc := f.Tag.Get("enc")
 	json := f.Tag.Get("json")
@@ -41,14 +39,6 @@ func parseTags(c ctx.C, f reflect.StructField) (tag tag, err error) {
 	if tag.name == "" {
 		tag.name = f.Name // fallback to field name
 	}
-	if u := f.Tag.Get("url"); u != "" {
-		var err error
-		tag.url, err = url.Parse(u)
-		if err != nil {
-			return tag, ctx.NewErrorf(c, "can't parse url: %q", u)
-		}
-	}
-
 	for _, p := range parts {
 		//log.Debugf(c, "%s %s", f.Name, p)
 		switch p {

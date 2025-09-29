@@ -13,10 +13,9 @@ import (
 type WordFilter struct {
 	Blacklist *regexp.Regexp
 
-	R     api.Request `url:"/wc"`
-	In    string      `api:"in,required" json:"in"`
-	Out   string      `api:"out" json:"out"`
-	Count int         `api:"out" json:"count"`
+	In    string `api:"in,required" json:"in"`
+	Out   string `api:"out" json:"out"`
+	Count int    `api:"out" json:"count"`
 }
 
 func (this *WordFilter) Do(c ctx.C) error {
@@ -39,7 +38,7 @@ func TestWordFilter(t *testing.T) {
 
 func exampleWordFilter(c ctx.C) { // nolint
 	s := http.NewServer(c)
-	_, _ = s.RegisterAPI(c, &WordFilter{
+	_, _ = s.RegisterAPI(c, "/wc", &WordFilter{
 		Blacklist: regexp.MustCompile(`(foo|bar)`), // this will be copied by ref for each request
 	})
 }

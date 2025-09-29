@@ -6,10 +6,9 @@ Simplifies API design, documentation and testing by binding a go `type` to an AP
 type WordFilter struct {
 	Blacklist *regexp.Regexp
 
-	R     api.Request `url:"/api/wordfilter/v1"`
-	In    string      `api:"in,required" json:"in"`
-	Out   string      `api:"out" json:"out"`
-	Count int         `api:"out" json:"count"`
+	In    string `api:"in,required" json:"in"`
+	Out   string `api:"out" json:"out"`
+	Count int    `api:"out" json:"count"`
 }
 
 func (this *WordFilter) Do(c ctx.C) error {
@@ -40,7 +39,7 @@ generate an API path:
 
 ```go
 	s := http.NewServer(c)
-	_ = s.RegisterAPI(c, &WordFilter{
+	_, _ = s.RegisterAPI(c, "/api/wordfilter/v1", &WordFilter{
 		Blacklist: regexp.MustCompile(`(foo|bar)`), // this will be copied by ref for each request
 	})
 ```
@@ -116,9 +115,3 @@ Conversely, the same happen on the client side, just with the roles reversed.
 If a field is marked as `auth`, it will be unmarshalled using the UID provided by the server side plumbing.
 
 Moreover, if `auth,required` a 403 should be returned if no valid authentication token is provided with the request (see `api.ServerRequest.Auth()`).
-
-
-### `url`
-
-Only one field should have the tag `url`, which provides a definition for the entrypoint of the API, and if fully qualified, can be used from clients directly without overrides for requests over the network. (see `http/client.go Client.API()`)
-

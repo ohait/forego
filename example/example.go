@@ -3,7 +3,6 @@ package example
 import (
 	"sync"
 
-	"github.com/ohait/forego/api"
 	"github.com/ohait/forego/ctx"
 )
 
@@ -13,12 +12,10 @@ type Store struct {
 }
 
 type Get struct {
-	any `url:"/api/v1/get" doc:"yooo hooo"`
+	any `doc:"yooo hooo"`
 
 	XFF string `api:"header,X-Forwarded-For"`
 	UID string `api:"auth,required"`
-
-	//R           api.Request `url:"/api/v1/get"`
 
 	Store *Store
 
@@ -32,8 +29,6 @@ func (this *Get) Do(c ctx.C) error {
 }
 
 type Set struct {
-	R api.Request `url:"/api/v1/set"`
-
 	Store *Store
 
 	Key   string `api:"in,out" json:"key"`
