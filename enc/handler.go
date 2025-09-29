@@ -3,7 +3,9 @@ package enc
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"reflect"
+	"strconv"
 	"time"
 
 	"github.com/ohait/forego/ctx"
@@ -212,7 +214,11 @@ func (this Handler) Marshal(c ctx.C, in any) (Node, error) {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		return Integer(v.Int()), nil
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		return Integer(v.Uint()), nil
+		u := v.Uint()
+		if u <= math.MaxInt64 {
+			return Integer(int64(u)), nil
+		}
+		return Digits(strconv.FormatUint(u, 10)), nil
 	case reflect.String:
 		return String(v.String()), nil
 	case reflect.Pointer:

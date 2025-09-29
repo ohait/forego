@@ -3,6 +3,7 @@ package enc
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"reflect"
 	"strconv"
 	"strings"
@@ -13,6 +14,7 @@ import (
 
 type Numeric interface {
 	Int64() (int64, error)
+	Uint64() (uint64, error)
 	Float64() (float64, error)
 	String() string
 	Duration(unit time.Duration) Duration
@@ -23,12 +25,18 @@ type numeric interface {
 	Node
 }
 
-type Integer int
+type Integer int64
 
 var _ Node = Integer(0)
 var _ Numeric = Integer(0)
 
-func (this Integer) Int64() (int64, error)        { return int64(this), nil }
+func (this Integer) Int64() (int64, error) { return int64(this), nil }
+func (this Integer) Uint64() (uint64, error) {
+	if this < 0 {
+		return 0, fmt.Errorf("%v: negative integer", this)
+	}
+	return uint64(this), nil
+}
 func (this Integer) Float64() (float64, error)    { return float64(this), nil }
 func (this Integer) String() string               { return strconv.FormatInt(int64(this), 10) }
 func (this Integer) GoString() string             { return fmt.Sprintf("enc.Int{%v}", int64(this)) }
@@ -46,7 +54,16 @@ type Float float64
 var _ Node = Float(0)
 var _ Numeric = Float(0)
 
-func (this Float) Int64() (int64, error)        { return int64(this), nil }
+func (this Float) Int64() (int64, error) { return int64(this), nil }
+func (this Float) Uint64() (uint64, error) {
+	if this < 0 {
+		return 0, fmt.Errorf("%v: negative float", this)
+	}
+	if this > Float(math.MaxUint64) {
+		return 0, fmt.Errorf("%v: overflows uint64", this)
+	}
+	return uint64(this), nil
+}
 func (this Float) Float64() (float64, error)    { return float64(this), nil }
 func (this Float) String() string               { return strconv.FormatFloat(float64(this), 'g', -1, 64) }
 func (this Float) GoString() string             { return fmt.Sprintf("enc.Float{%v}", float64(this)) }
@@ -67,6 +84,9 @@ func (this Digits) Int64() (int64, error) {
 	i, err := strconv.ParseInt(string(this), 10, 64)
 	return i, err
 }
+func (this Digits) Uint64() (uint64, error) {
+	return strconv.ParseUint(string(this), 10, 64)
+}
 func (this Digits) Float64() (float64, error) { return strconv.ParseFloat(string(this), 64) }
 func (this Digits) String() string            { return string(this) }
 func (this Digits) GoString() string          { return fmt.Sprintf("enc.Num{%q}", string(this)) }
@@ -84,6 +104,13 @@ func (this Digits) MustInteger() Integer {
 	}
 	return Integer(f)
 }
+func (this Digits) MustUint() uint64 {
+	u, err := strconv.ParseUint(string(this), 10, 64)
+	if err != nil {
+		panic(err)
+	}
+	return u
+}
 func (this Digits) IsFloat() bool {
 	return strings.ContainsAny(string(this), ".eEgG")
 }
@@ -91,7 +118,8 @@ func (this Digits) Duration(unit time.Duration) Duration {
 	if this.IsFloat() {
 		return this.MustFloat().Duration(unit)
 	} else {
-		return this.MustInteger().Duration(unit)
+		u := this.MustUint()
+		return Duration(time.Duration(u) * unit)
 	}
 }
 
@@ -131,11 +159,11 @@ func unmarshalNumericInto(this numeric, c ctx.C, handler Handler, into reflect.V
 		reflect.Uint16,
 		reflect.Uint32,
 		reflect.Uint64:
-		i, err := this.Int64() // TODO FIXME need Uint
+		u, err := this.Uint64()
 		if err != nil {
 			return err
 		}
-		into.SetUint(uint64(i))
+		into.SetUint(u)
 	case reflect.Interface:
 		v := reflect.ValueOf(this.native())
 		into.Set(v)

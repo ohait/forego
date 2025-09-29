@@ -26,7 +26,7 @@ func (this Pairs) AsMap() Map {
 func (this Pairs) native() any {
 	out := map[string]any{}
 	for _, p := range this {
-		out[p.Name] = p.Value.native()
+		out[p.JSON] = p.Value.native()
 	}
 	return out
 }
@@ -42,7 +42,7 @@ func (this Pairs) String() string {
 func (this Pairs) GoString() string {
 	list := []string{}
 	for _, p := range this {
-		list = append(list, fmt.Sprintf("%q:%#s", p.Name, p.Value))
+		list = append(list, fmt.Sprintf("%q:%#s", p.JSON, p.Value))
 	}
 	return "enc.Pairs{" + strings.Join(list, ", ") + "}"
 }
