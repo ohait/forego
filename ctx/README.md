@@ -1,8 +1,9 @@
 # `ctx`
 
-We expand from `context.Context` with few features and quality of life:
-* mostly we assume we always want a `ctx.C` everywhere: because tracing, span, tags, loggers, etc
-* contexts are not just for cancel, they can store environment, configuration and setting and overrides on each requests
+We expand from `context.Context` with a few features and quality-of-life helpers:
+* `ctx.C` is a thin alias over `context.Context` so call sites read `c ctx.C`
+* helpers such as `WithCancel`, `WithValue`, `WithTimeout`, … keep everything in terms of `ctx.C`
+* contexts are not just for cancel—they carry tags, loggers, span data, configuration and per-request overrides
 
 ## Why `c ctx.C` instead of `ctx context.Context`?
 
@@ -25,7 +26,7 @@ All logging is `JSONL`, e.g.:
 May be wise to use a log viewer like `https://github.com/ohait/jl`   
 
 
-## `ctx.Err`
+## Rich errors: `ctx.Error`
 
 ```go
   return ctx.NewErrorf(c, "my error wrapping %w", err)
@@ -33,12 +34,19 @@ May be wise to use a log viewer like `https://github.com/ohait/jl`
 
 Having a wrapping error that provide a stack trace has proven formidable when debugging or operating.
 
-When the logger find a `ctx.Err` as an argument (or anything wrapping it) it will print the stack trace as part of the error message.
+When the logger finds a `ctx.Error` as an argument (or anything wrapping it) it will print the stack trace as part of the error message.
+
+Use `ctx.NewErrorf` or `ctx.WrapError` to build those errors.
 
 
 ## Caveats
 
-Generating stack traces is expensive in go, so don't use wrapping errors if you expect to ignore them often.
+Generating stack traces is expensive in Go, so don't use wrapping errors if you expect to ignore them often. `ctx.Error` captures the
+current stack and tags, which allocates and burns CPU, so avoid using it as a sentinel or control-flow marker.
+
+## Logging
+
+The companion package [`ctx/log`](../ctx/log/) provides JSON logging with automatic inclusion of tags, stack traces and custom payloads. Attach your own logger with `log.WithLogger(c, fn)` or use the default stderr JSONL output.
 
 ## TODO
 

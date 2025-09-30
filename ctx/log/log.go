@@ -1,3 +1,5 @@
+// Package log provides structured JSON logging built on top of ctx.C contexts
+// so tags, stack traces, and errors travel together.
 package log
 
 import (
@@ -10,6 +12,8 @@ import (
 	"github.com/ohait/forego/ctx"
 )
 
+// Line represents a single JSON log entry. Logger implementations receive this
+// structure and can marshal it or enrich it before emitting.
 type Line struct {
 	Level   string    `json:"level,omitempty"`
 	Src     string    `json:"src,omitempty"`
@@ -18,12 +22,17 @@ type Line struct {
 	Tags    Tags      `json:"tags,omitempty"`
 }
 
+// Tags mirrors the key-value metadata attached to a ctx.C. Values are stored as
+// ctx.JSON so they can be reused directly in log lines.
 type Tags map[string]ctx.JSON
 
+// Loggable allows values to customise what gets attached to a log line and to
+// mutate tags when the value is rendered.
 type Loggable interface {
 	LogAs(*Tags) any
 }
 
+// JSON returns the line encoded as a JSON document.
 func (this Line) JSON() string {
 	j, err := json.Marshal(this)
 	if err != nil {
@@ -39,12 +48,14 @@ type loggerValue struct {
 	log    func(Line)
 }
 
-// return a new context with a custom logger attached to it
+// WithLogger attaches logger to the context so subsequent log calls emit
+// through it instead of the default JSONL writer.
 func WithLogger(c ctx.C, logger func(Line)) ctx.C {
 	return context.WithValue(c, loggerKey{}, loggerValue{func() {}, logger})
 }
 
-// same as WithLogger(), but it has an extra helper function mostly used for testing
+// WithLoggerAndHelper behaves like WithLogger but also stores a helper hook
+// typically used by tests to mark caller frames.
 func WithLoggerAndHelper(c ctx.C, logger func(Line), helper func()) ctx.C {
 	return context.WithValue(c, loggerKey{}, loggerValue{helper, logger})
 }
@@ -65,6 +76,7 @@ func getLogger(c ctx.C) loggerValue {
 	return logger
 }
 
+// Errorf records an error-level log entry using fmt.Sprintf-style formatting.
 func Errorf(c ctx.C, f string, args ...any) {
 	l := getLogger(c)
 	l.helper()
@@ -74,6 +86,7 @@ func Errorf(c ctx.C, f string, args ...any) {
 	}.formatf(c, f, args...))
 }
 
+// Warnf records a warning-level log entry.
 func Warnf(c ctx.C, f string, args ...any) {
 	l := getLogger(c)
 	l.helper()
@@ -83,6 +96,7 @@ func Warnf(c ctx.C, f string, args ...any) {
 	}.formatf(c, f, args...))
 }
 
+// Infof records an info-level log entry.
 func Infof(c ctx.C, f string, args ...any) {
 	l := getLogger(c)
 	l.helper()
@@ -92,6 +106,7 @@ func Infof(c ctx.C, f string, args ...any) {
 	}.formatf(c, f, args...))
 }
 
+// Debugf records a debug-level log entry.
 func Debugf(c ctx.C, f string, args ...any) {
 	l := getLogger(c)
 	l.helper()
@@ -101,7 +116,7 @@ func Debugf(c ctx.C, f string, args ...any) {
 	}.formatf(c, f, args...))
 }
 
-// TODO(oha) needed?
+// Log emits a preconstructed log line using the logger stored in c.
 func (at Line) Log(c ctx.C) {
 	l := getLogger(c)
 	l.helper()

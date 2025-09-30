@@ -11,8 +11,8 @@ type tagC struct {
 	json JSON
 }
 
-// Append the given key/val pair to the context
-// Note(oha): if the same key is added twice, it will be found twice later with the Range
+// WithTag appends key/value metadata to the context. Multiple tags with the same
+// key are permitted and will be delivered in insertion order.
 func WithTag(c C, key string, val any) C {
 	var j []byte
 	switch val := val.(type) {
@@ -40,7 +40,8 @@ func WithTag(c C, key string, val any) C {
 	}
 }
 
-// scan the chain of context for tags, call the function on each of them, parents first
+// RangeTag walks the context chain and invokes fn for each tag starting with the
+// oldest parent. Returning an error stops iteration and the error bubbles up.
 func RangeTag(c C, fn func(k string, json JSON) error) error {
 	if c == nil {
 		return nil

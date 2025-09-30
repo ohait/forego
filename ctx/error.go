@@ -6,16 +6,15 @@ import (
 	"runtime"
 )
 
-/*
-creates a new error using the given format and argument
-if any argument is an error, it will be wrapped as per fmt.Errorf()
-the error is then given a stack trace and context unless it already has one
-*/
+// NewErrorf formats an error and ensures it carries a stack trace plus the
+// originating context. It behaves like fmt.Errorf but automatically wraps the
+// result in ctx.Error so log messages can include tracebacks and tags.
 func NewErrorf(c C, f string, args ...any) error {
 	return maybeWrap(c, fmt.Errorf(f, args...))
 }
 
-// if the given error is nil, returns nil. Otherwise check if it already was wrapped into a ctx.Error and wrap it if not
+// WrapError attaches a stack trace and context to err unless it already holds
+// that information. It is safe to call with nil.
 func WrapError(c C, err error) error {
 	if err == nil {
 		return nil
@@ -23,21 +22,27 @@ func WrapError(c C, err error) error {
 	return maybeWrap(c, err)
 }
 
-// a generic error which contains the stack trace
+// Error is the rich error type used by Forego. It records the wrapped error,
+// the stack leading to its creation, and the context active at that time so it
+// can later be inspected or logged with tags intact.
 type Error struct {
 	Err   error    `json:"err"`
 	Stack []string `json:"stack"`
 	C     C        `json:"ctx"`
 }
 
+// Error implements the error interface by forwarding to the wrapped error.
 func (err Error) Error() string {
 	return err.Err.Error()
 }
 
+// Unwrap returns the underlying error so errors.Is / errors.As keep working.
 func (err Error) Unwrap() error {
 	return err.Err
 }
 
+// Is reports whether err matches Error or the wrapped value, allowing callers
+// to detect Forego errors via errors.Is.
 func (this Error) Is(err error) bool {
 	switch err.(type) {
 	case *Error, Error:
@@ -74,18 +79,21 @@ func stack(above, max int) []string {
 	return stack
 }
 
-// just a []byte, but marshal and unmarshal like json.RawMessage and it is printed as string in logs, win win
+// JSON behaves like json.RawMessage while remaining printable in log tags.
 type JSON []byte
 
+// MarshalJSON returns the raw bytes, keeping JSON compatibility.
 func (this JSON) MarshalJSON() ([]byte, error) {
 	return this, nil
 }
 
+// UnmarshalJSON stores the raw JSON payload.
 func (this *JSON) UnmarshalJSON(j []byte) error {
 	*this = j
 	return nil
 }
 
+// String renders the payload verbatim, handy for logs.
 func (this JSON) String() string {
 	return string(this)
 }
