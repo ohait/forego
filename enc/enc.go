@@ -51,13 +51,6 @@ func (this path) String() string {
 	return strings.TrimPrefix(out, ".")
 }
 
-func (this path) Parent() path {
-	if len(this) > 0 {
-		return this[0 : len(this)-2]
-	}
-	return this
-}
-
 // convert json.Unmarshal(&any) to enc.Node
 func fromNative(in any) Node {
 	switch in := in.(type) {

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/ohait/forego/ctx"
 	"github.com/ohait/forego/ctx/log"
 	"github.com/ohait/forego/enc"
 	"github.com/ohait/forego/test"
@@ -219,4 +220,48 @@ func TestArray(t *testing.T) {
 		err := enc.Unmarshal(c, enc.List{n}, &x)
 		test.Error(t, err)
 	}
+}
+
+type I interface {
+	x()
+}
+
+type A struct {
+	A string `json:"a"`
+}
+
+func (a A) x() {}
+
+type N int
+
+func (n N) x() {}
+
+func TestRegistry(t *testing.T) {
+	c := test.Context(t)
+	h := &enc.Handler{
+		Debugf: func(_ ctx.C, f string, args ...any) {
+			t.Logf("H> "+f, args...)
+		},
+	}
+	enc.Register(h, func(c ctx.C, n enc.Node) (I, error) {
+		switch n.(type) {
+		case enc.Map:
+			var out A
+			t.Logf("unmarshalling N from %T", n)
+			return &out, enc.Unmarshal(c, n, &out)
+		case enc.Integer:
+			var out N
+			t.Logf("unmarshalling N from %T", n)
+			return out, enc.Unmarshal(c, n, &out)
+		default:
+			return nil, ctx.NewErrorf(c, "unsupported type %T", n)
+		}
+	})
+	var i I
+	err := h.Unmarshal(c, enc.Map{"a": enc.String("foo")}, &i)
+	test.NoError(t, err)
+	test.EqualsGo(t, &A{A: "foo"}, i)
+	err = h.Unmarshal(c, enc.Integer(42), &i)
+	test.NoError(t, err)
+	test.EqualsGo(t, N(42), i)
 }

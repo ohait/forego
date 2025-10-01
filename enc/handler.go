@@ -12,6 +12,10 @@ import (
 	"github.com/ohait/forego/ctx/log"
 )
 
+// factory holds global type factories registered at init time.
+// This map is only written during init() and read-only afterwards, so no locking is needed.
+var factory = map[reflect.Type]func(c ctx.C, n Node) (any, error){}
+
 // generic object that do the Unmarshal()/Conflate()
 type Handler struct {
 	Factory map[reflect.Type]func(c ctx.C, n Node) (any, error)
@@ -22,6 +26,29 @@ type Handler struct {
 	Debugf func(c ctx.C, f string, args ...any)
 
 	path path
+}
+
+// Register registers a factory function for type T.
+// When h is nil, registers globally (must be called during init()).
+// When h is non-nil, registers on that specific Handler instance (can be called anytime).
+// Note: The factory is registered as *T, not T, so unmarshal lookup checks both T and *T.
+func Register[T any](h *Handler, f func(ctx.C, Node) (T, error)) {
+	var obj *T
+	t := reflect.TypeOf(obj)
+	fn := func(c ctx.C, n Node) (any, error) {
+		return f(c, n)
+	}
+	if h == nil {
+		factory[t] = fn
+	} else {
+		if h.Debugf != nil {
+			h.Debugf(nil, "registered %v (%T)", t, obj)
+		}
+		if h.Factory == nil {
+			h.Factory = map[reflect.Type]func(ctx.C, Node) (any, error){}
+		}
+		h.Factory[t] = fn
+	}
 }
 
 func (this Handler) Append(p any) Handler {
@@ -51,8 +78,8 @@ func (this Handler) Unmarshal(c ctx.C, n Node, into any) error {
 }
 
 func (this Handler) unmarshal(c ctx.C, from Node, v reflect.Value) error {
-	//c = ctx.WithTag(c, "path", this.path.String()) // NOTE(oha): this is a bit slow because the json part
-	//defer log.Debugf(c, "unmarshal( %T %+v => %v{%+v} )", from, from, v.Type(), v)
+	// c = ctx.WithTag(c, "path", this.path.String()) // NOTE(oha): this is a bit slow because the json part
+	// defer log.Debugf(c, "unmarshal( %T %+v => %v{%+v} )", from, from, v.Type(), v)
 	if this.Debugf != nil {
 		this.Debugf(c, "unmarshal( %v -> %v{%v} )", from, v.Type(), v)
 	}
@@ -119,27 +146,40 @@ func (this Handler) unmarshal(c ctx.C, from Node, v reflect.Value) error {
 		}
 	*/
 
-	if this.Factory != nil {
-		f := this.Factory[v.Type()]
-		if f != nil {
-			log.Debugf(c, "factory for type %v", v.Type())
-			obj, err := f(c, from)
-			if err != nil {
-				return ctx.NewErrorf(c, "factory error: %w", err)
-			}
-			s := reflect.ValueOf(obj)
-			if !s.CanConvert(v.Elem().Type()) {
-				return ctx.NewErrorf(c, "Factory %v returned %v which can't be converted to %v",
-					v.Type().Elem(), s.Type(), v.Elem().Type())
-			}
-			log.Debugf(c, "Factory %v returned %v which can be converted to %v",
-				v.Type().Elem(), s.Type(), v.Elem().Type())
-			v.Elem().Set(s) // we set the value, not the pointer... because go.reflect
-			return nil
+	var f func(ctx.C, Node) (any, error)
+	if this.Factory == nil {
+		f = factory[v.Type()]
+		if f == nil {
+			// also check for a pointer to this type
+			f = factory[reflect.PointerTo(v.Type())]
+		}
+	} else {
+		f = this.Factory[v.Type()]
+		if f == nil {
+			// also check for a pointer to this type
+			f = this.Factory[reflect.PointerTo(v.Type())]
 		}
 	}
+	if f != nil {
+		if this.Debugf != nil {
+			this.Debugf(c, "factory for type %v", v.Type())
+		}
+		obj, err := f(c, from)
+		if err != nil {
+			return ctx.NewErrorf(c, "factory error: %w", err)
+		}
+		s := reflect.ValueOf(obj)
+		if !s.CanConvert(v.Type()) {
+			return ctx.NewErrorf(c, "Factory %v returned %v which can't be converted to %v",
+				v.Type(), s.Type(), v.Type())
+		}
+		log.Debugf(c, "Factory %v returned %v which can be converted to %v",
+			v.Type(), s.Type(), v.Type())
+		v.Set(s)
+		return nil
+	}
 
-	//log.Debugf(c, "OHA %T => %v", from, v.Type())
+	// log.Debugf(c, "OHA %T => %v", from, v.Type())
 	if this.Debugf != nil {
 		this.Debugf(c, "normal type: %v, use generic %T.unmarshalInto()", v.Type(), from)
 	}
@@ -175,16 +215,16 @@ func Marshal(c ctx.C, in any) (Node, error) {
 }
 
 func (this Handler) Marshal(c ctx.C, in any) (Node, error) {
-	//log.Warnf(c, "OHA: %T %v", in, in)
+	// log.Warnf(c, "OHA: %T %v", in, in)
 	switch in := in.(type) {
 	case nil:
 		return Nil{}, nil
 	case Marshaler:
-		//log.Warnf(c, "OHA: %T->MarshalNode", in)
+		// log.Warnf(c, "OHA: %T->MarshalNode", in)
 		return in.MarshalNode(c)
 	case time.Time:
 		return Time(in), nil
-		//return String(in.Format(time.RFC3339Nano)), nil
+		// return String(in.Format(time.RFC3339Nano)), nil
 	case ctx.Error:
 		return String(in.Error()), nil
 	case *ctx.Error:
@@ -230,7 +270,7 @@ func (this Handler) Marshal(c ctx.C, in any) (Node, error) {
 		if v.IsNil() {
 			return Nil{}, nil
 		}
-		fallthrough //Intentional, since the above check breaks when called on arrays
+		fallthrough // Intentional, since the above check breaks when called on arrays
 	case reflect.Array:
 		list := List{}
 		for i := 0; i < v.Len(); i++ {

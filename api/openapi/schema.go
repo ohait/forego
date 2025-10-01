@@ -41,6 +41,14 @@ func (this *Service) SchemaFromType(c ctx.C, t reflect.Type, tags *reflect.Struc
 	return s, err
 }
 
+func (this *Service) MustSchemaFromType(c ctx.C, obj any) *Schema {
+	s, err := this.SchemaFromType(c, reflect.TypeOf(obj), nil)
+	if err != nil {
+		panic(err)
+	}
+	return s
+}
+
 func (this *Service) schemaFromType(c ctx.C, t reflect.Type, doc, example string) (s *Schema, err error) {
 	defer func() {
 		if s.Format == s.Type {

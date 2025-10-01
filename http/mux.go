@@ -10,8 +10,61 @@ import (
 	"github.com/ohait/forego/api/openapi"
 	"github.com/ohait/forego/ctx"
 	"github.com/ohait/forego/ctx/log"
+	"github.com/ohait/forego/enc"
 	"github.com/ohait/forego/utils"
 )
+
+func HandleRequest[Req any](
+	c ctx.C,
+	s *Server,
+	path string,
+	f func(ctx.C, Req, http.ResponseWriter) error, // NOTE: the ctx.C comes from the server
+) *openapi.PathItem {
+	oa := s.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
+		c := r.Context()
+		if r.Body == nil {
+			http.Error(w, "missing request body", 400)
+			return
+		}
+		defer r.Body.Close()
+		var req Req
+		if r.ContentLength > 10*1024*1024 {
+			http.Error(w, "request body too large", 400)
+			return
+		}
+		body := make([]byte, r.ContentLength)
+		_, err := r.Body.Read(body)
+		if err != nil {
+			http.Error(w, "can't read request body: "+err.Error(), 400)
+			return
+		}
+		err = enc.UnmarshalJSON(c, body, &req)
+		if err != nil {
+			http.Error(w, "can't decode request body: "+err.Error(), 400)
+			return
+		}
+		log.Debugf(c, "decoded request: %+v", req)
+
+		// call the function
+		err = f(c, req, w)
+		if err != nil {
+			http.Error(w, "error processing request: "+err.Error(), 500)
+		}
+	})
+	var req Req
+	oa.Post = &openapi.PathItem{
+		Summary: "Handle " + path,
+		RequestBody: &openapi.RequestBody{
+			Required: true,
+			Content: map[string]openapi.MediaType{
+				"application/json": {
+					Schema: s.OpenAPI.MustSchemaFromType(c, req),
+				},
+			},
+		},
+	}
+	return oa.Post
+}
 
 func (this *Server) HandleFunc(path string, h http.HandlerFunc) *openapi.Path {
 	return this.Handle(path, http.HandlerFunc(h))
@@ -55,8 +108,10 @@ type responseHijacker struct {
 	hijacker http.Hijacker
 }
 
-var _ http.Hijacker = &responseHijacker{}
-var _ http.Flusher = responseHijacker{}
+var (
+	_ http.Hijacker = &responseHijacker{}
+	_ http.Flusher  = responseHijacker{}
+)
 
 func (r *response) WriteHeader(code int) {
 	if r.code != 0 {
