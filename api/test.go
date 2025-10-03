@@ -8,8 +8,8 @@ import (
 )
 
 // TODO(oha): should we do marshalling here to be safe?
-func Test[T Op](t *testing.T, op T) T {
-	c := test.Context(t)
+func Test[T Op](c ctx.C, op T) T {
+	t := test.T(c)
 	t.Helper()
 	h, err := NewHandler(c, op)
 	test.NoError(t, err)
@@ -25,7 +25,7 @@ func Test[T Op](t *testing.T, op T) T {
 		test.Fail(t, "%+v", err)
 	}
 
-	err = req.Do(test.Context(t))
+	err = req.Do(c)
 	test.NoError(t, err)
 
 	j = &JSON{}
