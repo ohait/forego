@@ -5,7 +5,6 @@ import (
 	"reflect"
 
 	"github.com/ohait/forego/ctx"
-	"github.com/ohait/forego/ctx/log"
 )
 
 type String string
@@ -25,7 +24,7 @@ func (this String) String() string {
 }
 
 func (this String) unmarshalInto(c ctx.C, handler Handler, into reflect.Value) error {
-	log.Debugf(c, "%v.unmarshalInto(%#v)", this, into)
+	// log.Debugf(c, "%v.unmarshalInto(%#v)", this, into)
 	switch into.Kind() {
 	case reflect.String:
 		into.SetString(string(this))

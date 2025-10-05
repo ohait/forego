@@ -2,6 +2,7 @@ package http
 
 import (
 	"bufio"
+	"io"
 	"net"
 	"net/http"
 	"strings"
@@ -33,7 +34,7 @@ func HandleRequest[Req any](
 			return
 		}
 		body := make([]byte, r.ContentLength)
-		_, err := r.Body.Read(body)
+		_, err := io.ReadFull(r.Body, body)
 		if err != nil {
 			http.Error(w, "can't read request body: "+err.Error(), 400)
 			return
@@ -48,7 +49,8 @@ func HandleRequest[Req any](
 		// call the function
 		err = f(c, req, w)
 		if err != nil {
-			http.Error(w, "error processing request: "+err.Error(), 500)
+			log.Warnf(c, "request: %v", err)
+			http.Error(w, "request: "+err.Error(), 500)
 		}
 	})
 	var req Req
