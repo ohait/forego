@@ -18,17 +18,18 @@ type WordFilter struct {
 	Count int    `api:"out" json:"count"`
 }
 
-func (this *WordFilter) Do(c ctx.C) error {
-	this.Out = this.Blacklist.ReplaceAllStringFunc(this.In, func(bad string) string {
-		this.Count++
+func (wf *WordFilter) Do(c ctx.C) error {
+	wf.Out = wf.Blacklist.ReplaceAllStringFunc(wf.In, func(bad string) string {
+		wf.Count++
 		return "***"
 	})
 	return nil
 }
 
 func TestWordFilter(t *testing.T) {
+	c := test.Context(t)
 	re := regexp.MustCompile(`(bad|worse|worst)`)
-	out := api.Test(t, &WordFilter{
+	out := api.Test(c, &WordFilter{
 		Blacklist: re,
 		In:        "ok, bad or worse",
 	})
@@ -51,7 +52,6 @@ func exampleHandler(c ctx.C) error { // nolint
 	ser := h.Server()
 
 	onRequest := func(c ctx.C, req api.ServerRequest, res api.ServerResponse) error {
-
 		// un marshal the request into a new *WordFilter
 		op, err := ser.Recv(c, req)
 		if err != nil {
