@@ -14,6 +14,7 @@ type builder struct {
 	structType  reflect.Type
 	fields      []fieldInit
 	constructor method
+	closer      method
 	methods     []method
 }
 
@@ -34,6 +35,12 @@ func (this builder) build(c C, req enc.Node) any {
 
 	// setup channel routing...
 	c.ch.byPath = map[string]func(c C, req enc.Node) error{}
+	if this.closer.methodName != "" {
+		closer := this.closer
+		c.ch.close = func(c C) error {
+			return closer.call(c, v, nil)
+		}
+	}
 	for _, method := range this.methods {
 		method := method
 		c.ch.byPath[method.name] = func(c C, req enc.Node) error {
@@ -150,11 +157,18 @@ func (this *builder) inspect(c ctx.C, obj any) error {
 			log.Debugf(c, "WS ignoring %q because %d args", method.name, method.argument)
 			continue
 		}
-		if m.Name == "Init" {
+		switch m.Name {
+		case "Init":
 			this.constructor = method
-		} else {
-			this.methods = append(this.methods, method)
+			continue
+		case "Close":
+			if method.argument != nil {
+				return ctx.NewErrorf(c, "ws.Close must not accept arguments")
+			}
+			this.closer = method
+			continue
 		}
+		this.methods = append(this.methods, method)
 	}
 	return nil
 }

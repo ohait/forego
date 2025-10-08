@@ -28,7 +28,7 @@ func (this *Handler) Server() websocket.Server {
 
 			defer shutdown.Hold().Release()
 
-			//defer metrics.WS{Path: path}.Start().End(c)
+			// defer metrics.WS{Path: path}.Start().End(c)
 			ws := Conn{
 				h: this,
 				ws: &wsImpl{

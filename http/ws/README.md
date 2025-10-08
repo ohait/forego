@@ -2,7 +2,20 @@
 
 This library allows you to bind multiple objects to a WebSocket, exposing some of their methods.
 
-You could call it RPC over Websockets.
+You could call it RPC over WebSockets.
+
+## How It Works
+
+The WebSocket protocol uses **channels** to manage multiple concurrent RPC sessions over a single WebSocket connection. Each channel represents an independent instance of a registered object.
+
+### Message Flow
+
+1. **Opening a channel**: Client sends a message with `type: "open"` (or `"new"`) to instantiate an object
+2. **Calling methods**: Client sends messages with `path: "methodName"` to invoke methods on that instance
+3. **Receiving replies**: Server sends messages with `path: "methodName"` containing return data
+4. **Closing a channel**: Client sends `type: "close"` to destroy the instance
+
+All messages include a `channel` field (arbitrary string ID) to route to the correct object instance.
 
 
 Example:
@@ -37,72 +50,108 @@ Bound to an http server like:
 	s.Mux().Handle("/counter/ws/v1", h.Server()) // `h.Server()` returns an http.Handler
 ```
 
-After a clients connect, it will instantiate a new Counter by sending:
+### Client Protocol
 
-```
+After connecting to the WebSocket, a client instantiates a new Counter by sending:
+
+```json
 {
-  channel: "1234",
-  type: "new",
-  path: "counter",
+  "channel": "c1",
+  "type": "open",
+  "path": "counter"
 }
 ```
+
+**Note**: The `path` field when opening must match the lowercase struct name (e.g., `Counter` → `"counter"`).
 
 Increment it by 7 with:
 
-```
+```json
 {
-  channel: "1234",
-  path: "inc",
-  data: 7,
+  "channel": "c1",
+  "path": "inc",
+  "data": 7
 }
 ```
+
+**Note**: Method names are automatically lowercased (e.g., `Inc()` → `"inc"`).
 
 Query the current value:
 
-```
+```json
 {
-  channel: "1234",
-  path: "get",
+  "channel": "c1",
+  "path": "get"
 }
 ```
 
-And closing the channel with:
-```
+The server will reply with:
+
+```json
 {
-  channel: "1234",
-  type "close",
+  "channel": "c1",
+  "path": "ct",
+  "data": 7
 }
 ```
 
-Or instantiate another `Counter` (or any other object) by using different channels.
+Close the channel with:
+
+```json
+{
+  "channel": "c1",
+  "type": "close"
+}
+```
+
+You can instantiate another `Counter` (or any other registered object) by using a different channel ID:
+
+```json
+{
+  "channel": "c2",
+  "type": "open",
+  "path": "counter"
+}
+```
 
 ## Reflection
 
-This library inspect the given object
+This library inspects the given object using reflection to determine what to expose.
 
 ### Fields
 
-Any field which is public and not zero, is used to initialize the objects when instantiated by a new channel
+Any public field with a non-zero value is shallow-copied to new instances when a channel is opened. This allows you to configure shared settings (like `MinIncrement` in the example).
 
-### `Init()`
+### `Init()` Method
 
-The special field `Init()` won't be exposed, but used as an extra step for initialization
+The special method `Init(c ws.C, data T)` is called during channel instantiation but not exposed as a regular method. Use it for custom initialization logic when a channel opens.
 
-### Methods
+The `data` parameter receives the `data` field from the opening message, allowing clients to pass initialization parameters.
 
-Any other public method that has the first argument of type `ws.C` and on optional argument, will be exposed.
+### Exposed Methods
 
-The `data` field is expanded in the optional argument before calling the function
+Any public method with signature `func (receiver *T) MethodName(c ws.C, [data T]) error` is exposed:
 
-The method must return an error
+- **First parameter**: Must be `ws.C` (WebSocket context)
+- **Second parameter** (optional): Receives the `data` field from the client message (unmarshaled to the parameter type)
+- **Return**: Must return `error`
 
-`ws.C` can be used to send replies or close the channel
+The `data` field from client messages is automatically unmarshaled into the method's second parameter type before calling.
 
-### Names
+### Using `ws.C`
 
-By default, names are obtained from methods and types directly, with the initial lower-case.
+The `ws.C` context provides:
+- `c.Reply(path string, obj any)`: Send a reply message to the client
+- `c.Close()`: Close the WebSocket connection
+- All methods from `ctx.C` (logging, cancellation, etc.)
 
-TODO: allow overrides
+### Naming Convention
+
+Names are derived automatically:
+- **Struct name** → lowercase first letter (e.g., `Counter` → `"counter"`, `Board` → `"board"`)
+- **Method name** → lowercase first letter (e.g., `Inc()` → `"inc"`, `Get()` → `"get"`)
+
+This is done via `toLowerFirst()` internally.
 
 
 ## Test

@@ -130,6 +130,7 @@ func (this *TestClient) Open(c ctx.C, path string, data any, onData func(ctx.C, 
 				return err
 			case <-c.Done():
 				return c.Err()
+
 			}
 		}, this.Send(c, Frame{
 			Type:    "open",

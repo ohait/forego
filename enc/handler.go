@@ -173,8 +173,9 @@ func (this Handler) unmarshal(c ctx.C, from Node, v reflect.Value) error {
 			return ctx.NewErrorf(c, "Factory %v returned %v which can't be converted to %v",
 				v.Type(), s.Type(), v.Type())
 		}
-		log.Debugf(c, "Factory %v returned %v which can be converted to %v",
-			v.Type(), s.Type(), v.Type())
+		if this.Debugf != nil {
+			this.Debugf(c, "Factory %v returned %v which can be converted to %v", v.Type(), s.Type(), v.Type())
+		}
 		v.Set(s)
 		return nil
 	}

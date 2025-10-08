@@ -16,6 +16,10 @@ type Conn struct {
 }
 
 func (this *Conn) Close(c ctx.C, reason int) error {
+	this.byChan.Range(func(_ string, ch *Channel) bool {
+		ch.invokeClose(c)
+		return true
+	})
 	return this.ws.Close(c, reason)
 }
 

@@ -3,6 +3,7 @@ package ws
 import (
 	"fmt"
 	"io"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -16,6 +17,8 @@ type Counter struct {
 	MinAmt int
 	Ct     int
 }
+
+var counterClosed int32
 
 func (this *Counter) Init(c C, amt int) error {
 	log.Warnf(c, "%p.Init(%v)", this, amt)
@@ -38,6 +41,12 @@ func (this Counter) Get(c C) error {
 	return c.Reply("ct", this.Ct)
 }
 
+func (this *Counter) Close(c C) error {
+	log.Warnf(c, "%p.Close()", this)
+	atomic.AddInt32(&counterClosed, 1)
+	return nil
+}
+
 func (this Counter) Special(c C, req struct {
 	ID  string `json:"id"`
 	Val any    `json:"val"`
@@ -56,6 +65,7 @@ func (this *Counter) Foo(other int) {
 }
 
 func TestReflect(t *testing.T) {
+	atomic.StoreInt32(&counterClosed, 0)
 	var _ Frame
 	c := test.Context(t)
 	h := Handler{}
@@ -114,5 +124,6 @@ func TestReflect(t *testing.T) {
 			test.Fail(t, "unexpected %v", msg)
 		}
 	}
+	test.EqualsGo(t, int32(1), atomic.LoadInt32(&counterClosed))
 	t.Logf("EXIT")
 }
