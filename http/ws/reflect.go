@@ -22,7 +22,7 @@ type builder struct {
 func (this builder) build(c C, req enc.Node) any {
 	v := reflect.New(this.structType)
 	for _, c := range this.fields {
-		//log.Debugf(nil, "set %v", c.value)
+		// log.Debugf(nil, "set %v", c.value)
 		v.Elem().Field(c.index).Set(c.value)
 	}
 

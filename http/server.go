@@ -29,6 +29,31 @@ type Server struct {
 	ready int32
 
 	OpenAPI *openapi.Service
+
+	// ReadTimeout is the maximum duration for reading the entire
+	// request, including the body. A zero or negative value means
+	// there will be no timeout.
+	//
+	// Because ReadTimeout does not let Handlers make per-request
+	// decisions on each request body's acceptable deadline or
+	// upload rate, most users will prefer to use
+	// ReadHeaderTimeout. It is valid to use them both.
+	ReadTimeout time.Duration
+
+	// ReadHeaderTimeout is the amount of time allowed to read
+	// request headers. The connection's read deadline is reset
+	// after reading the headers and the Handler can decide what
+	// is considered too slow for the body. If zero, the value of
+	// ReadTimeout is used. If negative, or if zero and ReadTimeout
+	// is zero or negative, there is no timeout.
+	ReadHeaderTimeout time.Duration
+
+	// WriteTimeout is the maximum duration before timing out
+	// writes of the response. It is reset whenever a new
+	// request's header is read. Like ReadTimeout, it does not
+	// let Handlers make decisions on a per-request basis.
+	// A zero or negative value means there will be no timeout.
+	WriteTimeout time.Duration
 }
 
 func (this *Server) SetReady(code int) {
@@ -104,8 +129,10 @@ func (this Server) Listen(c ctx.C, addr string) (*net.TCPAddr, error) {
 		ConnState: func(conn net.Conn, state http.ConnState) {
 			// TODO(oha): do we need to setup a limiter? if so, this is to know when any hijacker kicks in
 		},
-		ReadTimeout: 30 * time.Second,
-		// WriteTimeout: 30 * time.Second, // better let the implementation decide
+		ReadTimeout:       this.ReadTimeout,
+		ReadHeaderTimeout: this.ReadHeaderTimeout,
+		WriteTimeout:      this.WriteTimeout,
+
 		Handler: this.h,
 	}
 	if addr == "" {
