@@ -75,8 +75,10 @@ func (this *Conn) Loop(c ctx.C) error {
 func (this *Conn) onData(c ctx.C, f Frame) error {
 	switch f.Type {
 	case "close":
-		// WAIT FOR STUFF?
-		return this.Close(c, 1000)
+		if ch := this.byChan.Get(f.Channel); ch != nil {
+			return ch.Close(c)
+		}
+		return nil
 	case "new", "open":
 		if fn := this.h.byPath.Get(f.Path); fn != nil {
 			return fn(c, this, f)

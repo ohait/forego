@@ -6,14 +6,14 @@ You could call it RPC over WebSockets.
 
 ## How It Works
 
-The WebSocket protocol uses **channels** to manage multiple concurrent RPC sessions over a single WebSocket connection. Each channel represents an independent instance of a registered object.
+The WebSocket protocol uses **channels** to manage multiple concurrent RPC sessions over a single WebSocket connection. Each channel represents an independent instance of a registered object. The same object type could be instantiated multiple times using different channel IDs.
 
 ### Message Flow
 
 1. **Opening a channel**: Client sends a message with `type: "open"` (or `"new"`) to instantiate an object
 2. **Calling methods**: Client sends messages with `path: "methodName"` to invoke methods on that instance
-3. **Receiving replies**: Server sends messages with `path: "methodName"` containing return data
-4. **Closing a channel**: Client sends `type: "close"` to destroy the instance
+3. **Receiving replies**: Server sends messages with `path: "methodName"` containing data
+4. **Closing a channel**: Client sends `type: "close"` for that channel to destroy the instance
 
 All messages include a `channel` field (arbitrary string ID) to route to the correct object instance.
 
@@ -21,7 +21,6 @@ All messages include a `channel` field (arbitrary string ID) to route to the cor
 Example:
 
 ```go
-   // maps to `counter` unless overridden
    type Counter struct {
      MinIncrement int
      ct int
@@ -46,11 +45,15 @@ Bound to an http server like:
 
 ```go
 	h := ws.Handler{}
-	h.Register(c, &Counter{MinIncrement: 1}) // the fields are shallow copied into any new instance
+	h.MustRegister(c, &Counter{MinIncrement: 1}) // the fields are shallow copied into any new instance
 	s.Mux().Handle("/counter/ws/v1", h.Server()) // `h.Server()` returns an http.Handler
 ```
 
+**Note**: you can specify the default values of the field. When a new channel is opened, the fields are shallow copied to the new instance.
+
 ### Client Protocol
+
+#### Init
 
 After connecting to the WebSocket, a client instantiates a new Counter by sending:
 
@@ -63,6 +66,13 @@ After connecting to the WebSocket, a client instantiates a new Counter by sendin
 ```
 
 **Note**: The `path` field when opening must match the lowercase struct name (e.g., `Counter` → `"counter"`).
+
+If the object has an `Init(c ws.C)` method, it will be called during instantiation.
+
+If the object has instead a `Init(c ws.C, data T)` method, the `data` field from the opening message will be unmarshaled into `T` and passed to `Init`.
+
+
+#### Method Calls
 
 Increment it by 7 with:
 
@@ -95,7 +105,9 @@ The server will reply with:
 }
 ```
 
-Close the channel with:
+#### Close
+
+When the client is done with an instance, it can close it by sending:
 
 ```json
 {
@@ -103,6 +115,13 @@ Close the channel with:
   "type": "close"
 }
 ```
+
+This will fire the `Close(ws.C)` method if it exists, remove the channel from the connection, and leave other channels untouched.
+
+**Note**: The `Close(ws.C)` method can never have secondary parameters, and it will be called whenever the channel or the whole connection is closed (`c.Close()` or a dropped WebSocket).
+
+
+#### Multiple Instances
 
 You can instantiate another `Counter` (or any other registered object) by using a different channel ID:
 
@@ -114,6 +133,7 @@ You can instantiate another `Counter` (or any other registered object) by using 
 }
 ```
 
+
 ## Reflection
 
 This library inspects the given object using reflection to determine what to expose.
@@ -122,15 +142,10 @@ This library inspects the given object using reflection to determine what to exp
 
 Any public field with a non-zero value is shallow-copied to new instances when a channel is opened. This allows you to configure shared settings (like `MinIncrement` in the example).
 
-### `Init()` Method
-
-The special method `Init(c ws.C, data T)` is called during channel instantiation but not exposed as a regular method. Use it for custom initialization logic when a channel opens.
-
-The `data` parameter receives the `data` field from the opening message, allowing clients to pass initialization parameters.
 
 ### Exposed Methods
 
-Any public method with signature `func (receiver *T) MethodName(c ws.C, [data T]) error` is exposed:
+Any public method (excluding `Init` and `Close` with signature `func (receiver *T) MethodName(c ws.C, [data T]) error` is exposed:
 
 - **First parameter**: Must be `ws.C` (WebSocket context)
 - **Second parameter** (optional): Receives the `data` field from the client message (unmarshaled to the parameter type)
@@ -138,25 +153,19 @@ Any public method with signature `func (receiver *T) MethodName(c ws.C, [data T]
 
 The `data` field from client messages is automatically unmarshaled into the method's second parameter type before calling.
 
+At registration, the list of exposed methods is logged for reference, and the one rejected (if any) with the reason.
+
 ### Using `ws.C`
 
-The `ws.C` context provides:
+The `ws.C` context compose a normal `ctx.C` but also provides:
 - `c.Reply(path string, obj any)`: Send a reply message to the client
 - `c.Close()`: Close the WebSocket connection
 - All methods from `ctx.C` (logging, cancellation, etc.)
 
-### Naming Convention
-
-Names are derived automatically using `toLowerFirst()` which lowercases only the first character:
-- **Struct name** → lowercase first letter (e.g., `Counter` → `"counter"`, `Board` → `"board"`)
-- **Method name** → lowercase first letter, rest unchanged (e.g., `Inc()` → `"inc"`, `Get()` → `"get"`, `IngestFile()` → `"ingestFile"`)
-
-**Important**: CamelCase method names preserve their internal capitalization. Only the first character is lowercased.
-
 
 ## Test
 
-Since all the bindings to the WebSocket is automatic, you could test the object directly for functionalities and ignore the bindings entirely
+Since all the bindings to the WebSocket is automatic, you could (and probably should) test the object directly for functionalities and ignore the bindings entirely
 
 Alternatively you can use the provided test client:
 
@@ -175,6 +184,9 @@ Alternatively you can use the provided test client:
 		return nil
 	})
 ```
+
+This client allows you to open channels, call methods, and receive replies, all in a test environment and without go-routines.
+
 
 ## `Handler{}.Server()`
 
