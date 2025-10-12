@@ -74,7 +74,7 @@ Increment it by 7 with:
 }
 ```
 
-**Note**: Method names are automatically lowercased (e.g., `Inc()` → `"inc"`).
+**Note**: Method names have their first letter lowercased (e.g., `Inc()` → `"inc"`, `IngestFile()` → `"ingestFile"`).
 
 Query the current value:
 
@@ -147,11 +147,11 @@ The `ws.C` context provides:
 
 ### Naming Convention
 
-Names are derived automatically:
+Names are derived automatically using `toLowerFirst()` which lowercases only the first character:
 - **Struct name** → lowercase first letter (e.g., `Counter` → `"counter"`, `Board` → `"board"`)
-- **Method name** → lowercase first letter (e.g., `Inc()` → `"inc"`, `Get()` → `"get"`)
+- **Method name** → lowercase first letter, rest unchanged (e.g., `Inc()` → `"inc"`, `Get()` → `"get"`, `IngestFile()` → `"ingestFile"`)
 
-This is done via `toLowerFirst()` internally.
+**Important**: CamelCase method names preserve their internal capitalization. Only the first character is lowercased.
 
 
 ## Test
