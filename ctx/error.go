@@ -31,6 +31,10 @@ type Error struct {
 	C     C        `json:"ctx"`
 }
 
+func (err Error) String() string {
+	return err.Err.Error()
+}
+
 // Error implements the error interface by forwarding to the wrapped error.
 func (err Error) Error() string {
 	return err.Err.Error()
