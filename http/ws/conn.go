@@ -73,6 +73,8 @@ func (this *Conn) Loop(c ctx.C) error {
 }
 
 func (this *Conn) onData(c ctx.C, f Frame) error {
+	c = ctx.WithNextTracking(c)
+	c = ctx.WithTag(c, "ws.frame", f.Channel+"/"+f.Type+"/"+f.Path)
 	switch f.Type {
 	case "close":
 		if ch := this.byChan.Get(f.Channel); ch != nil {
