@@ -6,14 +6,14 @@ import (
 	"testing"
 )
 
-func NotContains(t *testing.T, str, pattern string) {
+func NotContains(t *testing.T, str any, pattern string) {
 	t.Helper()
-	contains(str, pattern).false(t)
+	contains(fmt.Sprintf("%v", str), pattern).false(t)
 }
 
-func Contains(t *testing.T, str, pattern string) {
+func Contains(t *testing.T, str any, pattern string) {
 	t.Helper()
-	contains(str, pattern).true(t)
+	contains(fmt.Sprintf("%v", str), pattern).true(t)
 }
 
 func ContainsGo(t *testing.T, obj any, pattern string) {
@@ -35,7 +35,7 @@ func NotContainsJSON(t *testing.T, obj any, pattern string) {
 	contains(s, pattern).false(t)
 }
 
-func contains(s string, pattern string) res {
+func contains(s, pattern string) res {
 	if strings.Contains(s, pattern) {
 		return res{true, Quote(s)}
 	} else {
