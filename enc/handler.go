@@ -223,19 +223,17 @@ func (this Handler) Marshal(c ctx.C, in any) (Node, error) {
 	case Marshaler:
 		// log.Warnf(c, "OHA: %T->MarshalNode", in)
 		return in.MarshalNode(c)
-	case time.Time:
-		return Time(in), nil
-		// return String(in.Format(time.RFC3339Nano)), nil
-	case ctx.Error:
-		return String(in.Error()), nil
-	case *ctx.Error:
-		return String(in.Error()), nil
 	case json.Marshaler:
 		j, err := in.MarshalJSON()
 		if err != nil {
 			return nil, err
 		}
 		return JSON{}.Decode(c, j)
+	case error:
+		return String(in.Error()), nil
+	case time.Time:
+		return Time(in), nil
+		// return String(in.Format(time.RFC3339Nano)), nil
 	case Node:
 		return in, nil
 	}
