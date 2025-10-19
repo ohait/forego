@@ -59,7 +59,7 @@ func (res res) prefix(f string, args ...any) res {
 }
 
 // expect true
-func (res res) true(t *testing.T) {
+func (res res) true(t testing.TB) {
 	t.Helper()
 	if res.succeed {
 		OK(t, "%s", res.msg)
@@ -69,7 +69,7 @@ func (res res) true(t *testing.T) {
 }
 
 // expect false
-func (res res) false(t *testing.T) {
+func (res res) false(t testing.TB) {
 	t.Helper()
 	if res.succeed {
 		Fail(t, "%s", res.msg)

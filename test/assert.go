@@ -8,20 +8,22 @@ import (
 )
 
 // var ok = "✅  "
-var ok = "  ✔ "
-var ko = "❌  "
+var (
+	ok = "  ✔ "
+	ko = "❌  "
+)
 
-func OK(t *testing.T, f string, args ...any) {
+func OK(t testing.TB, f string, args ...any) {
 	t.Helper()
 	t.Logf(ok+f, args...)
 }
 
-func Fail(t *testing.T, f string, args ...any) {
+func Fail(t testing.TB, f string, args ...any) {
 	t.Helper()
 	t.Fatalf(ko+f, args...)
 }
 
-func Assert(t *testing.T, cond bool) {
+func Assert(t testing.TB, cond bool) {
 	t.Helper()
 	if cond {
 		OK(t, "%s", stringy{ast.Assignment(0, 1)})

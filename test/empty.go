@@ -6,12 +6,12 @@ import (
 	"testing"
 )
 
-func NotEmpty(t *testing.T, obj any) {
+func NotEmpty(t testing.TB, obj any) {
 	t.Helper()
 	empty(obj).argument(0, 1).false(t)
 }
 
-func Empty(t *testing.T, obj any) {
+func Empty(t testing.TB, obj any) {
 	t.Helper()
 	empty(obj).argument(0, 1).true(t)
 }

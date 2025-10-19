@@ -40,6 +40,7 @@ Creates a new server, it will internally setup several middleware which provide:
 * `/live` which always return 204 (OK No Content)
 * `/ready` which by default returns 204 (can be changed with `s.SetReady()`)
 * `/openapi.json` serialized from `s.OpenAPI`
+* optional `/docs` page you can register to render an interactive [Scalar](https://github.com/scalar/scalar) reference (see below)
 
 ### `Mux()`
 
@@ -73,3 +74,28 @@ An entry is created in `s.OpenAPI` for the given path, and the `*openapi.PathInf
 Uses the [api](../api/) library to parse the given object, and expose the API.
 
 It also update `s.OpenAPI` accordingly.
+
+### Serve a documentation page
+
+Once your handlers populate `s.OpenAPI`, we recommend wiring a tiny HTML page that embeds [Scalar API Reference](https://github.com/scalar/scalar/tree/main/packages/api-reference) for a polished, zero-maintenance reader:
+
+```go
+s.HandleFunc("/docs", func(w http.ResponseWriter, r *http.Request) {
+	html := `<!DOCTYPE html>
+<html>
+<head>
+    <title>API Documentation</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+<body>
+    <script id="api-reference" data-url="/openapi.json"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+</body>
+</html>`
+	w.Header().Set("Content-Type", "text/html")
+	_, _ = w.Write([]byte(html))
+})
+```
+
+Scalar pulls from the auto-generated `/openapi.json`, so updates to your API surface show up immediately.  

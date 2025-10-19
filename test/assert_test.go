@@ -6,7 +6,7 @@ import (
 	"github.com/ohait/forego/utils/ast"
 )
 
-func testAssignment(t *testing.T, cond bool) {
+func testAssignment(t testing.TB, cond bool) {
 	a := ast.Assignment(0, 1)
 	t.Logf("assignment: %s", a)
 	ContainsJSON(t, a, "42")

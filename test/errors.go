@@ -9,7 +9,7 @@ import (
 	"github.com/ohait/forego/utils/ast"
 )
 
-func NoError(t *testing.T, err error) {
+func NoError(t testing.TB, err error) {
 	t.Helper()
 	if isNil(err).succeed {
 		OK(t, "no error: %s", stringy{ast.Assignment(0, 1)})
@@ -23,7 +23,7 @@ func NoError(t *testing.T, err error) {
 	}
 }
 
-func Error(t *testing.T, err error) {
+func Error(t testing.TB, err error) {
 	t.Helper()
 	if isNil(err).succeed {
 		Fail(t, "expected error: %s", stringy{ast.Assignment(0, 1)})

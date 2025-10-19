@@ -6,30 +6,30 @@ import (
 	"testing"
 )
 
-func NotContains(t *testing.T, str any, pattern string) {
+func NotContains(t testing.TB, str any, pattern string) {
 	t.Helper()
 	contains(fmt.Sprintf("%v", str), pattern).false(t)
 }
 
-func Contains(t *testing.T, str any, pattern string) {
+func Contains(t testing.TB, str any, pattern string) {
 	t.Helper()
 	contains(fmt.Sprintf("%v", str), pattern).true(t)
 }
 
-func ContainsGo(t *testing.T, obj any, pattern string) {
+func ContainsGo(t testing.TB, obj any, pattern string) {
 	t.Helper()
 	contains(fmt.Sprintf("%#v", obj), pattern).true(t)
 }
 
 // check if the json of obj contains pattern
-func ContainsJSON(t *testing.T, obj any, pattern string) {
+func ContainsJSON(t testing.TB, obj any, pattern string) {
 	t.Helper()
 	s := jsonish(obj)
 	contains(s, pattern).true(t)
 }
 
 // check if the json of obj does NOT contains pattern
-func NotContainsJSON(t *testing.T, obj any, pattern string) {
+func NotContainsJSON(t testing.TB, obj any, pattern string) {
 	t.Helper()
 	s := jsonish(obj)
 	contains(s, pattern).false(t)

@@ -6,12 +6,12 @@ import (
 	"testing"
 )
 
-func Nil(t *testing.T, obj any) {
+func Nil(t testing.TB, obj any) {
 	t.Helper()
 	isNil(obj).argument(0, 1).true(t)
 }
 
-func NotNil(t *testing.T, obj any) {
+func NotNil(t testing.TB, obj any) {
 	t.Helper()
 	isNil(obj).argument(0, 1).false(t)
 }
