@@ -35,14 +35,14 @@ func (this *Conn) Loop(c ctx.C) error {
 				return
 			default:
 				if c.Err() == nil { // ignore cancels
-					log.Warnf(c, "inbox: %v", err)
+					log.Debugf(c, "inbox: %v", err)
 				}
 				return
 			case nil:
 				select {
 				case inbox <- n:
 				case <-c.Done():
-					log.Warnf(c, "inbox: %v", err)
+					log.Debugf(c, "inbox: %v", err)
 					return
 				}
 			}

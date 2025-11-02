@@ -31,7 +31,9 @@ func (this *Channel) onData(c ctx.C, f Frame) error {
 	if fn == nil {
 		return ctx.NewErrorf(c, "no %q for channel %q", f.Path, f.Channel)
 	}
-	log.Debugf(c, "ch[%q].%q(%v)", f.Channel, f.Path, f.Data)
+	if this.Conn != nil && this.Conn.h != nil && this.Conn.h.Trace {
+		log.Debugf(c, "ch[%q].%q(%v)", f.Channel, f.Path, f.Data)
+	}
 	err := fn(C{C: c, ch: this}, f.Data)
 	if err != nil {
 		// log.Warnf(c, "ws: sending %v", err)

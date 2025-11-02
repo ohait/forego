@@ -32,6 +32,7 @@ type impl interface {
 type wsImpl struct {
 	m    sync.Mutex
 	conn *websocket.Conn
+	trace bool
 }
 
 var _ impl = &wsImpl{}
@@ -40,7 +41,9 @@ func (this *wsImpl) Write(c ctx.C, n enc.Node) error {
 	j := enc.JSON{}.Encode(c, n)
 	this.m.Lock()
 	defer this.m.Unlock()
-	log.Debugf(c, "ws.write: %s", j)
+	if this.trace {
+		log.Debugf(c, "ws.write: %s", j)
+	}
 	return this.write(c, j)
 }
 
@@ -116,7 +119,9 @@ func (this *wsImpl) read(c ctx.C) ([]byte, error) {
 	if err != nil {
 		return nil, ctx.WrapError(c, err)
 	}
-	log.Debugf(c, "ws recv: %s", data)
+	if this.trace {
+		log.Debugf(c, "ws recv: %s", data)
+	}
 	return data, nil
 }
 

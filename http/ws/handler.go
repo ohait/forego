@@ -13,6 +13,9 @@ import (
 )
 
 type Handler struct {
+	// Trace enables verbose frame and dispatch logging when true.
+	Trace bool
+
 	byPath sync.Map[string, func(ctx.C, *Conn, Frame) error]
 }
 
@@ -32,13 +35,14 @@ func (this *Handler) Server() websocket.Server {
 			ws := Conn{
 				h: this,
 				ws: &wsImpl{
-					conn: conn,
+					conn:  conn,
+					trace: this.Trace,
 				},
 			}
 			defer ws.Close(c, 1000)
 			err := ws.Loop(c)
 			if err != nil {
-				log.Warnf(c, "loop: %v", err)
+				log.Debugf(c, "loop: %v", err)
 			}
 		}),
 		Handshake: func(config *websocket.Config, req *http.Request) (err error) {
