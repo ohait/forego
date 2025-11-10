@@ -16,6 +16,9 @@ type Handler struct {
 	// Trace enables verbose frame and dispatch logging when true.
 	Trace bool
 
+	// Called when shutdown.Started()
+	OnShutdown func(c ctx.C, conn *Conn)
+
 	byPath sync.Map[string, func(ctx.C, *Conn, Frame) error]
 }
 

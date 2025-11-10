@@ -65,8 +65,8 @@ func (this *Server) SetReady(code int) {
 func (this *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		if rec := recover(); rec != nil {
-			c := ctx.WithTag(r.Context(), "stack", string(debug.Stack()))
-			log.Errorf(c, "PANIC: %v", rec)
+			stack := string(debug.Stack())
+			log.Errorf(r.Context(), "PANIC: %s\n%s", rec, stack)
 			w.WriteHeader(500)
 		}
 	}()

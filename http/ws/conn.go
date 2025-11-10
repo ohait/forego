@@ -6,6 +6,7 @@ import (
 	"github.com/ohait/forego/ctx"
 	"github.com/ohait/forego/ctx/log"
 	"github.com/ohait/forego/enc"
+	"github.com/ohait/forego/shutdown"
 	"github.com/ohait/forego/utils/sync"
 )
 
@@ -53,6 +54,12 @@ func (this *Conn) Loop(c ctx.C) error {
 		select {
 		case <-c.Done():
 			return c.Err()
+		case <-shutdown.Started():
+			log.Infof(c, "ws: graceful shutdown")
+			this.onShutdown(c)
+		case <-shutdown.Started5Sec():
+			log.Warnf(c, "ws: late shutdown")
+			this.onShutdown(c)
 		case n, ok := <-inbox:
 			if !ok {
 				return ctx.NewErrorf(c, "inbox closed")
@@ -69,6 +76,13 @@ func (this *Conn) Loop(c ctx.C) error {
 				continue
 			}
 		}
+	}
+}
+
+func (this *Conn) onShutdown(c ctx.C) {
+	h := this.h.OnShutdown
+	if h != nil {
+		h(c, this)
 	}
 }
 
