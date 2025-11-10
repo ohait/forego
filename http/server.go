@@ -7,6 +7,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"runtime/debug"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -59,6 +60,17 @@ type Server struct {
 func (this *Server) SetReady(code int) {
 	log.Infof(nil, "ready set to %d", code)
 	atomic.StoreInt32(&this.ready, int32(code))
+}
+
+func (this *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	defer func() {
+		if rec := recover(); rec != nil {
+			c := ctx.WithTag(r.Context(), "stack", string(debug.Stack()))
+			log.Errorf(c, "PANIC: %v", rec)
+			w.WriteHeader(500)
+		}
+	}()
+	this.h.ServeHTTP(w, r)
 }
 
 func NewServer(c ctx.C) *Server {
@@ -118,7 +130,7 @@ func (this Server) Mux() *http.ServeMux {
 	return this.mux
 }
 
-func (this Server) Listen(c ctx.C, addr string) (*net.TCPAddr, error) {
+func (this *Server) Listen(c ctx.C, addr string) (*net.TCPAddr, error) {
 	s := http.Server{
 		BaseContext: func(l net.Listener) context.Context {
 			return ctx.WithTag(c, "http.addr", l.Addr().String())
@@ -133,7 +145,7 @@ func (this Server) Listen(c ctx.C, addr string) (*net.TCPAddr, error) {
 		ReadHeaderTimeout: this.ReadHeaderTimeout,
 		WriteTimeout:      this.WriteTimeout,
 
-		Handler: this.h,
+		Handler: this,
 	}
 	if addr == "" {
 		addr = ":http"

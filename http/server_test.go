@@ -24,3 +24,24 @@ func TestServer(t *testing.T) {
 	test.NoError(t, err)
 	test.ContainsJSON(t, "one", string(res))
 }
+
+func TestServerPanic(t *testing.T) {
+	c := test.Context(t)
+
+	s := http.NewServer(c)
+	s.Mux().HandleFunc("/test/panic", func(w gohttp.ResponseWriter, r *gohttp.Request) {
+		panic("test panic")
+	})
+
+	addr, err := s.Listen(c, "127.0.0.1:0")
+	test.NoError(t, err)
+
+	req, err := gohttp.NewRequestWithContext(c, "POST", "http://"+addr.String()+"/test/panic", nil)
+	test.NoError(t, err)
+
+	{
+		req, err := gohttp.DefaultClient.Do(req)
+		test.NoError(t, err)
+		test.EqualsGo(t, gohttp.StatusInternalServerError, req.StatusCode)
+	}
+}
