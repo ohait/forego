@@ -10,7 +10,7 @@ import (
 )
 
 type builder struct {
-	name        string
+	name        string // lower first of struct type name
 	structType  reflect.Type
 	fields      []fieldInit
 	constructor method
