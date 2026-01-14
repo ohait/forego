@@ -106,6 +106,7 @@ func (this *TestClient) Open(c ctx.C, path string, data any, onData func(ctx.C, 
 			case ech <- err:
 			default:
 			}
+			return nil // Return early - don't pass return/error frames to user callback
 		}
 		err := onData(c, f)
 		if err != nil {
