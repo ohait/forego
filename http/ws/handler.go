@@ -148,10 +148,19 @@ func (this *Handler) Register(c ctx.C, obj any) error {
 			ID:     f.Channel,
 		}
 		conn.byChan.Store(ch.ID, ch)
-		obj := b.build(C{
+		obj, err := b.build(C{
 			C:  c,
 			ch: ch,
 		}, f.Data)
+		if err != nil {
+			log.Warnf(c, "build %q: %v", b.name, err)
+			return conn.Send(c, Frame{
+				Channel: f.Channel,
+				Path:    f.Path,
+				Type:    "return",
+				Data:    enc.MustMarshal(c, err),
+			})
+		}
 		log.Debugf(c, "new %+v", obj)
 		return nil
 	})

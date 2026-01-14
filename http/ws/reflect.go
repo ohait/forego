@@ -19,7 +19,7 @@ type builder struct {
 }
 
 // init a new object, and bind it's methods to the channel
-func (this builder) build(c C, req enc.Node) any {
+func (this builder) build(c C, req enc.Node) (any, error) {
 	v := reflect.New(this.structType)
 	for _, c := range this.fields {
 		// log.Debugf(nil, "set %v", c.value)
@@ -29,7 +29,7 @@ func (this builder) build(c C, req enc.Node) any {
 	if this.constructor.methodName != "" {
 		err := this.constructor.call(c, v, req)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
@@ -62,7 +62,7 @@ func (this builder) build(c C, req enc.Node) any {
 		}
 	}
 
-	return v.Interface()
+	return v.Interface(), nil
 }
 
 type method struct {
