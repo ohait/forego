@@ -52,7 +52,8 @@ func (this builder) build(c C, req enc.Node) (any, error) {
 					Type:    "return",
 					Data:    enc.MustMarshal(c, err),
 				})
-				return ctx.NewErrorf(c, "ws[%s|%s]: %v", c.ch.ID, method.name, err)
+				log.Infof(c, "ws[%s|%s]: error: %v", c.ch.ID, method.name, err)
+				return nil
 			}
 			return c.ch.Conn.Send(c, Frame{
 				Channel: c.ch.ID,
