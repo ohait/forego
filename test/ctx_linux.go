@@ -13,4 +13,4 @@ import (
 var isTerminal = func() bool {
 	_, err := unix.IoctlGetTermios(int(os.Stdout.Fd()), unix.TCGETS)
 	return err == nil
-()
+}()
