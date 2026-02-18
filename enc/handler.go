@@ -210,6 +210,74 @@ func warnIneff(c ctx.C, f string, args ...any) {
 	}
 }
 
+// transform a struct into a enc.Node, using the struct tags to determine the field names and options, allow custom pairs
+// this can be useful for adding a "type" field to a struct:
+//
+//	func (f Filter) Marshal(c ctx.C) (enc.Node, error) {
+//		return enc.MarshalStruct(c, f, enc.Pair{JSON: "type", Value: enc.String("filter")})
+//	}
+func MarshalStruct(c ctx.C, in any, pairs ...Pair) (Node, error) {
+	return Handler{}.MarshalStruct(c, in, pairs...)
+}
+
+func (this Handler) MarshalStruct(c ctx.C, in any, pairs ...Pair) (Node, error) {
+	v := reflect.ValueOf(in)
+	if !v.IsValid() {
+		return nil, ctx.NewErrorf(c, "can't marshal %T as struct", in)
+	}
+	for v.Kind() == reflect.Pointer {
+		if v.IsNil() {
+			return nil, ctx.NewErrorf(c, "can't marshal %T as struct", in)
+		}
+		v = v.Elem()
+	}
+	if v.Kind() != reflect.Struct {
+		return nil, ctx.NewErrorf(c, "can't marshal %T as struct", in)
+	}
+	t := v.Type()
+	out := Pairs(pairs)
+	for i := 0; i < v.NumField(); i++ {
+		ft := t.Field(i)
+		if !ft.IsExported() {
+			continue
+		}
+		tag := parseTag(ft)
+		if tag.Skip {
+			continue
+		}
+		fv := v.Field(i)
+		fn, err := this.Marshal(c, fv.Interface())
+		if err != nil {
+			return nil, err
+		}
+		switch fn := fn.(type) {
+		case Nil:
+			if !tag.OmitEmpty {
+				out = append(out, Pair{tag.Name, tag.JSON, fn})
+			}
+		case String:
+			if !tag.OmitEmpty || fn != "" {
+				out = append(out, Pair{tag.Name, tag.JSON, fn})
+			}
+		case Integer:
+			if !tag.OmitEmpty || fn != 0 {
+				out = append(out, Pair{tag.Name, tag.JSON, fn})
+			}
+		case Float:
+			if !tag.OmitEmpty || fn != 0.0 {
+				out = append(out, Pair{tag.Name, tag.JSON, fn})
+			}
+		case Digits:
+			if !tag.OmitEmpty || fn != "" {
+				out = append(out, Pair{tag.Name, tag.JSON, fn})
+			}
+		default:
+			out = append(out, Pair{tag.Name, tag.JSON, fn})
+		}
+	}
+	return out, nil
+}
+
 // transform an object into a enc.Node
 func Marshal(c ctx.C, in any) (Node, error) {
 	return Handler{}.Marshal(c, in)
@@ -318,46 +386,5 @@ func (this Handler) Marshal(c ctx.C, in any) (Node, error) {
 
 	case reflect.Struct:
 	}
-
-	out := Pairs{}
-	for i := 0; i < v.NumField(); i++ {
-		ft := t.Field(i)
-		if !ft.IsExported() {
-			continue
-		}
-		tag := parseTag(ft)
-		if tag.Skip {
-			continue
-		}
-		fv := v.Field(i)
-		fn, err := this.Marshal(c, fv.Interface())
-		if err != nil {
-			return nil, err
-		}
-		switch fn := fn.(type) {
-		case Nil:
-			if !tag.OmitEmpty {
-				out = append(out, Pair{tag.Name, tag.JSON, fn})
-			}
-		case String:
-			if !tag.OmitEmpty || fn != "" {
-				out = append(out, Pair{tag.Name, tag.JSON, fn})
-			}
-		case Integer:
-			if !tag.OmitEmpty || fn != 0 {
-				out = append(out, Pair{tag.Name, tag.JSON, fn})
-			}
-		case Float:
-			if !tag.OmitEmpty || fn != 0.0 {
-				out = append(out, Pair{tag.Name, tag.JSON, fn})
-			}
-		case Digits:
-			if !tag.OmitEmpty || fn != "" {
-				out = append(out, Pair{tag.Name, tag.JSON, fn})
-			}
-		default:
-			out = append(out, Pair{tag.Name, tag.JSON, fn})
-		}
-	}
-	return out, nil
+	return this.MarshalStruct(c, in)
 }

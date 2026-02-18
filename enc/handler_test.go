@@ -147,6 +147,44 @@ func TestMarshal(t *testing.T) {
 	}
 }
 
+func TestMarshalStruct(t *testing.T) {
+	c := test.Context(t)
+
+	type X struct {
+		S string `json:"s,omitempty"`
+		I int    `json:"i,omitempty"`
+	}
+
+	{
+		n, err := enc.MarshalStruct(c, X{S: "foo"}, enc.Pair{JSON: "type", Value: enc.String("x")})
+		test.NoError(t, err)
+		test.EqualsJSON(t, enc.Pairs{
+			{JSON: "type", Value: enc.String("x")},
+			{Name: "S", JSON: "s", Value: enc.String("foo")},
+		}, n)
+	}
+	{
+		n, err := enc.MarshalStruct(c, &X{S: "bar"})
+		test.NoError(t, err)
+		test.EqualsJSON(t, enc.Pairs{
+			{Name: "S", JSON: "s", Value: enc.String("bar")},
+		}, n)
+	}
+	{
+		_, err := enc.MarshalStruct(c, 42)
+		test.Error(t, err)
+	}
+	{
+		var x *X
+		_, err := enc.MarshalStruct(c, x)
+		test.Error(t, err)
+	}
+	{
+		_, err := enc.MarshalStruct(c, nil)
+		test.Error(t, err)
+	}
+}
+
 func TestOmitEmpty(t *testing.T) {
 	c := test.Context(t)
 
