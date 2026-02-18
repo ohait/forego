@@ -38,6 +38,26 @@ func TestTime(t *testing.T) {
 	test.EqualsGo(t, in, out)
 }
 
+func TestTimeOmitZero(t *testing.T) {
+	c := test.Context(t)
+
+	type X struct {
+		T time.Time `json:"time,omitzero"`
+	}
+
+	in0 := X{}
+	j0 := enc.MustMarshalJSON(c, in0)
+	test.NotContainsJSON(t, j0, `"time"`) // zero time -> omitted field
+
+	var out0 X
+	err := enc.UnmarshalJSON(c, j0, &out0)
+	test.NoError(t, err)
+	test.Assert(t, out0.T.IsZero()) // empty field -> zero time
+
+	j1 := enc.MustMarshalJSON(c, X{T: time.Now().UTC().Truncate(0)})
+	test.ContainsJSON(t, j1, `"time"`)
+}
+
 func TestTimeConv(t *testing.T) {
 	t.Run("time", func(t *testing.T) {
 		t0 := enc.Time(time.Now().UTC().Truncate(0))

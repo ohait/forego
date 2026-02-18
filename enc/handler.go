@@ -271,6 +271,10 @@ func (this Handler) MarshalStruct(c ctx.C, in any, pairs ...Pair) (Node, error) 
 			if !tag.OmitEmpty || fn != "" {
 				out = append(out, Pair{tag.Name, tag.JSON, fn})
 			}
+		case Time:
+			if !tag.OmitEmpty || !time.Time(fn).IsZero() {
+				out = append(out, Pair{tag.Name, tag.JSON, fn})
+			}
 		default:
 			out = append(out, Pair{tag.Name, tag.JSON, fn})
 		}
@@ -288,6 +292,9 @@ func (this Handler) Marshal(c ctx.C, in any) (Node, error) {
 	switch in := in.(type) {
 	case nil:
 		return Nil{}, nil
+	case time.Time:
+		return Time(in), nil
+		// return String(in.Format(time.RFC3339Nano)), nil
 	case Marshaler:
 		// log.Warnf(c, "OHA: %T->MarshalNode", in)
 		return in.MarshalNode(c)
@@ -299,9 +306,6 @@ func (this Handler) Marshal(c ctx.C, in any) (Node, error) {
 		return JSON{}.Decode(c, j)
 	case error:
 		return String(in.Error()), nil
-	case time.Time:
-		return Time(in), nil
-		// return String(in.Format(time.RFC3339Nano)), nil
 	case Node:
 		return in, nil
 	}

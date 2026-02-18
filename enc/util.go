@@ -108,12 +108,16 @@ func parseTag(tag reflect.StructField) (out Tag) {
 	if out.JSON == "" {
 		out.JSON = out.Name
 	}
-	switch extra {
-	case "omitempty":
-		out.OmitEmpty = true
-	case "":
-	default:
-		panic(fmt.Sprintf("invalid tag: %v", tag))
+	if extra != "" {
+		for _, opt := range strings.Split(extra, ",") {
+			switch opt {
+			case "omitempty", "omitzero":
+				out.OmitEmpty = true
+			case "":
+			default:
+				panic(fmt.Sprintf("invalid tag: %v", tag))
+			}
+		}
 	}
 	return
 }
