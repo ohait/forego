@@ -203,7 +203,7 @@ func (this *Server) HandleStream(path string, f StreamFunc) *openapi.PathItem {
 }
 
 // Setup the given request as JSON, and add it to `s.OpenAPI` for the given path as POST, returns the openapi.PathItem
-func (this *Server) HandleRequest(path string, f func(c ctx.C, in []byte, r *http.Request) ([]byte, error)) *openapi.PathItem {
+func (this *Server) HandleRequest(path string, f func(r *Request) (any, error)) *openapi.PathItem {
 	this.handleRequest(path, f)
 	return this.makePathItem(path)
 }
@@ -289,20 +289,10 @@ func (this *Server) handleStream(path string, f StreamFunc) {
 	})
 }
 
-func (this *Server) handleRequest(path string, f func(c ctx.C, in []byte, r *http.Request) ([]byte, error)) {
-	this.mux.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
+func (this *Server) handleRequest(path string, f func(r *Request) (any, error)) {
+	this.mux.HandleFunc(path, func(w ResponseWriter, r *http.Request) {
 		c := r.Context()
-		out, err := func() ([]byte, error) {
-			var in []byte
-			var err error
-			if r.Body != nil {
-				in, err = io.ReadAll(r.Body)
-				if err != nil {
-					return nil, NewErrorf(c, 400, "can't read body: %w", err)
-				}
-			}
-			return f(c, in, r)
-		}()
+		out, err := f(r)
 		if err != nil {
 			tid := ctx.GetTracking(c)
 			log.Warnf(c, "http: %v", err)
@@ -323,22 +313,36 @@ func (this *Server) handleRequest(path string, f func(c ctx.C, in []byte, r *htt
 			}
 			return
 		}
-
-		if len(out) == 0 {
+		if out == nil {
 			// no response content
-			w.WriteHeader(204)
+			w.WriteHeader(200)
+			return
+		}
+		var j []byte
+		switch out := out.(type) {
+		case []byte:
+			j = out
+		case enc.Node:
+			j = enc.JSON{}.Encode(c, out)
+		default:
+			j = enc.MustMarshalJSON(c, out)
+		}
+
+		if len(j) == 0 {
+			// no response content
+			w.WriteHeader(200)
 			return
 		}
 
 		w.Header().Add("Content-Type", "application/json")
-		if len(out) > 16*1024 && strings.Contains(r.Header.Get("Accept"), "gzip") { // TODO ugly parsing, but good enough for now
+		if len(j) > 16*1024 && strings.Contains(r.Header.Get("Accept"), "gzip") { // TODO ugly parsing, but good enough for now
 			w.Header().Add("Content-Encoding", "gzip")
 			w2 := gzip.NewWriter(w)
-			_, err = w2.Write(out)
+			_, err = w2.Write(j)
 			w2.Close()
-			log.Debugf(c, "sending gzip %d", len(out))
+			log.Debugf(c, "sending gzip %d", len(j))
 		} else {
-			_, err = w.Write(out)
+			_, err = w.Write(j)
 		}
 		if err != nil {
 			log.Warnf(c, "writing the response: %v", err)

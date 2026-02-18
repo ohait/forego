@@ -1,9 +1,7 @@
 package http
 
 import (
-	"bytes"
 	"io"
-	"net/http"
 
 	"github.com/ohait/forego/api"
 	"github.com/ohait/forego/api/openapi"
@@ -74,10 +72,11 @@ func (s *Server) RegisterAPI(c ctx.C, path string, obj Doable) (*openapi.PathIte
 	if err != nil {
 		return nil, err
 	}
-	f := func(c ctx.C, in []byte, r *http.Request) ([]byte, error) {
+	f := func(r *Request) (any, error) {
+		c := r.Context()
 		req := &api.JSON{}
 		if r.Body != nil {
-			err := req.ReadFrom(c, bytes.NewBuffer(in))
+			err := req.ReadFrom(c, r.Body)
 			if err != nil {
 				return nil, ctx.NewErrorf(c, "can't read request body: %v", err)
 			}

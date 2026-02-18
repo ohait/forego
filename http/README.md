@@ -10,8 +10,8 @@
 	})
 
   // generic POST handler with error helpers
-	s.HandleRequest("/test/two", func(c ctx.C, in []byte, r *gohttp.Request) ([]byte, error) {
-		return enc.MarshalJSON(c, "one")
+	s.HandleRequest("/test/two", func(r *gohttp.Request) (any, error) {
+		return map[string]string{"result": "one"}, nil
 	})
 
 	// using API library (see forego/api/)
@@ -46,21 +46,28 @@ Creates a new server, it will internally setup several middleware which provide:
 
 Returns the internal `ServeMux`, which can be then used to add new paths to the server using go built-in `http.Handler`
 
-### `HandleRequest(pattern string, fn func(ctx.C, []byte, *http.Request) ([]byte, error))`
+### `HandleRequest(pattern string, fn func(*http.Request) (any, error))`
 
 ```go
-	s.HandleRequest("/test/two", func(c ctx.C, in []byte, r *gohttp.Request) ([]byte, error) {
-		return enc.MarshalJSON(c, "one")
+	s.HandleRequest("/test/two", func(r *gohttp.Request) (any, error) {
+		c := r.Context()
+		req, err := io.ReadAll(r.Body)
+		if err != nil {
+			return nil, err
+		}
+		return map[string]any{
+			"size": len(req),
+			"path": r.URL.Path,
+		}, nil
 	})
 ```
 
-Helper which create a handler for the given function, which:
-* read fully the request body
-* call the given function
+Helper which creates a handler for the given function, which:
+* passes the incoming request to the given function
 * if error is returned, the `trackingID` is returned with a 500
 * if error is a http.Error, and the code is <500, then the error message is returned as well
-* if no response, return 204
-* otherwise set the response to `application/json` and send the data
+* if no response (e.g. function returns `nil`), return 200 with an empty body
+* otherwise set the response to `application/json` and send data (`[]byte`, `enc.Node`, or any JSON-marshalable value)
 * optionally gzip if more than 16KB and request accepts gzip
 
 An entry is created in `s.OpenAPI` for the given path, and the `*openapi.PathInfo` is returned for further tweaking

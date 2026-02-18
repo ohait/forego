@@ -1,6 +1,7 @@
 package http_test
 
 import (
+	"net/http/httptest"
 	"testing"
 
 	gohttp "net/http"
@@ -44,4 +45,20 @@ func TestServerPanic(t *testing.T) {
 		test.NoError(t, err)
 		test.EqualsGo(t, gohttp.StatusInternalServerError, req.StatusCode)
 	}
+}
+
+func TestHandleRequestNoContent(t *testing.T) {
+	c := test.Context(t)
+
+	s := http.NewServer(c)
+	s.HandleRequest("/test/no-content", func(r *gohttp.Request) (any, error) {
+		return nil, nil
+	})
+
+	req := httptest.NewRequest(gohttp.MethodPost, "/test/no-content", nil)
+	w := &ResponseWriter{}
+	s.Mux().ServeHTTP(w, req)
+
+	test.EqualsGo(t, gohttp.StatusOK, w.Code)
+	test.EqualsStr(t, "", w.Buf.String())
 }
