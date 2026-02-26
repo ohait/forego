@@ -57,6 +57,12 @@ type Server struct {
 	WriteTimeout time.Duration
 }
 
+// Use wraps the server handler with the given middleware.
+// Middleware is applied in the order of calls (last call = outermost wrapper).
+func (this *Server) Use(mw func(http.Handler) http.Handler) {
+	this.h = mw(this.h)
+}
+
 func (this *Server) SetReady(code int) {
 	log.Infof(nil, "ready set to %d", code)
 	atomic.StoreInt32(&this.ready, int32(code))
