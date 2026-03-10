@@ -202,6 +202,15 @@ func (this Handler) unmarshal(c ctx.C, from Node, v reflect.Value) error {
 	return from.unmarshalInto(c, this, v)
 }
 
+// skip the factory and unmarshal and directly unmarshal into the object, useful inside a custo Unmarshaler
+func UnmarshalInto(c ctx.C, n Node, into any) error {
+	return Handler{}.UnmarshalInto(c, n, into)
+}
+
+func (h Handler) UnmarshalInto(c ctx.C, n Node, into any) error {
+	return n.unmarshalInto(c, h, reflect.ValueOf(into).Elem())
+}
+
 func warnIneff(c ctx.C, f string, args ...any) {
 	msg := fmt.Sprintf(f, args...)
 	if !ineff[msg] {
