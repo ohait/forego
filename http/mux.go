@@ -88,11 +88,13 @@ func (this *Server) Handle(path string, h http.Handler) *openapi.Path {
 			h.ServeHTTP(w2, r.WithContext(c))
 		}
 
+		elapsed := time.Since(t0)
+		log.Infof(c, "%s %s %d %v", r.Method, r.URL.Path, w2.code, elapsed)
 		metric{
 			Method: r.Method,
 			Code:   w2.code,
 			Path:   path,
-		}.observe(time.Since(t0))
+		}.observe(elapsed)
 	})
 
 	p := &openapi.Path{}
