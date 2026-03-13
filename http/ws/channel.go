@@ -64,7 +64,7 @@ type C struct {
 }
 
 func (c C) Reply(path string, obj any) error {
-	return c.ch.Conn.Send(c, Frame{
+	return c.ch.Conn.SendOrClose(c, Frame{
 		Channel: c.ch.ID,
 		Path:    path,
 		Data:    enc.MustMarshal(c, obj),

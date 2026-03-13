@@ -108,6 +108,15 @@ func (this *Conn) onData(c ctx.C, f Frame) error {
 	}
 }
 
+func (this *Conn) SendOrClose(c ctx.C, f Frame) error {
+	err := this.Send(c, f)
+	if err != nil {
+		log.Warnf(c, "ws: closing... send error: %v", err)
+		return this.Close(c, 1011)
+	}
+	return nil
+}
+
 func (this *Conn) Send(c ctx.C, f Frame) error {
 	return this.ws.Write(c, enc.MustMarshal(c, f))
 }
