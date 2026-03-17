@@ -50,16 +50,18 @@ func (this *Conn) Loop(c ctx.C) error {
 		}
 	}()
 	defer this.Close(c, 1000)
+	shutdownStarted := shutdown.Started()
 	for {
 		select {
 		case <-c.Done():
 			return c.Err()
-		case <-shutdown.Started():
+		case <-shutdownStarted:
 			log.Infof(c, "ws: graceful shutdown")
 			this.onShutdown(c)
+			shutdownStarted = nil
 		case <-shutdown.Started5Sec():
 			log.Warnf(c, "ws: late shutdown")
-			this.onShutdown(c)
+			return nil
 		case n, ok := <-inbox:
 			if !ok {
 				return ctx.NewErrorf(c, "inbox closed")
