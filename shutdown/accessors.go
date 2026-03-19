@@ -2,6 +2,7 @@ package shutdown
 
 import (
 	"errors"
+	"time"
 
 	"github.com/ohait/forego/ctx"
 )
@@ -16,6 +17,10 @@ func (fn ReleaseFn) Release() { fn() }
 // start a global shutdown unless already started
 func Begin() {
 	shutdowner.begin()
+}
+
+func Since() time.Duration {
+	return shutdowner.Since()
 }
 
 // return a closed channel when the shutdown has started

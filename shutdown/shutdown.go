@@ -15,9 +15,10 @@ import (
 
 type shutter struct {
 	// channel used to broadcast a shutdown
-	ch   chan struct{}
-	ch5  chan struct{}
-	once sync.Once
+	startedAt time.Time
+	ch        chan struct{}
+	ch5       chan struct{}
+	once      sync.Once
 	// active services holding the shutdown to complete
 	wg sync.WaitGroup
 }
@@ -31,9 +32,17 @@ func newShutter() *shutter {
 	}
 }
 
+func (this *shutter) Since() time.Duration {
+	if this.startedAt.IsZero() {
+		return 0
+	}
+	return time.Since(this.startedAt)
+}
+
 // start a global shutdown unless already started
 func (this *shutter) begin() {
 	this.once.Do(func() {
+		this.startedAt = time.Now()
 		close(this.ch)
 		go func() {
 			time.Sleep(5 * time.Second)
