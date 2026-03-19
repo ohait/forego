@@ -222,7 +222,7 @@ func warnIneff(c ctx.C, f string, args ...any) {
 // transform a struct into a enc.Node, using the struct tags to determine the field names and options, allow custom pairs
 // this can be useful for adding a "type" field to a struct:
 //
-//	func (f Filter) Marshal(c ctx.C) (enc.Node, error) {
+//	func (f Filter) MarshalNode(c ctx.C) (enc.Node, error) {
 //		return enc.MarshalStruct(c, f, enc.Pair{JSON: "type", Value: enc.String("filter")})
 //	}
 func MarshalStruct(c ctx.C, in any, pairs ...Pair) (Node, error) {
