@@ -198,6 +198,26 @@ func TestOmitEmpty(t *testing.T) {
 	test.NotContainsJSON(t, j, "field")
 }
 
+func TestOmitEmptyBytes(t *testing.T) {
+	c := test.Context(t)
+
+	type x struct {
+		Raw   []byte    `json:"raw,omitempty"`
+		Bytes enc.Bytes `json:"bytes,omitempty"`
+	}
+
+	j := enc.MustMarshalJSON(c, x{})
+	test.NotContainsJSON(t, j, `"raw"`)
+	test.NotContainsJSON(t, j, `"bytes"`)
+
+	j = enc.MustMarshalJSON(c, x{
+		Raw:   []byte{1, 2, 3},
+		Bytes: enc.Bytes{4, 5, 6},
+	})
+	test.ContainsJSON(t, j, `"raw":"AQID"`)
+	test.ContainsJSON(t, j, `"bytes":"BAUG"`)
+}
+
 func TestCompat(t *testing.T) {
 	c := test.Context(t)
 	h := enc.Handler{

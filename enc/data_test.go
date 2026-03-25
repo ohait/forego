@@ -22,6 +22,7 @@ func TestBasicData(t *testing.T) {
 	testData(c, t, float32(0.5))
 	testData(c, t, true)
 	testData(c, t, "string")
+	testData(c, t, []byte{1, 2, 3})
 	testData(c, t, "úñí©øðé")
 	testData(c, t, "a&b")
 	testData(c, t, time.Now().Truncate(0))

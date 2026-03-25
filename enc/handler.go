@@ -106,6 +106,20 @@ func (this Handler) unmarshal(c ctx.C, from Node, v reflect.Value) error {
 			this.Debugf(c, "is %T", into)
 		}
 		return into.UnmarshalNode(c, from)
+	case *[]byte:
+		if this.Debugf != nil {
+			this.Debugf(c, "is %T", into)
+		}
+		switch from := from.(type) {
+		case Bytes:
+			out := make([]byte, len(from))
+			copy(out, from)
+			*into = out
+			return nil
+		default:
+			j := JSON{}.Encode(c, from)
+			return json.Unmarshal(j, into)
+		}
 	case *json.RawMessage:
 		if this.Debugf != nil {
 			this.Debugf(c, "is %T", into)
@@ -280,6 +294,10 @@ func (this Handler) MarshalStruct(c ctx.C, in any, pairs ...Pair) (Node, error) 
 			if !tag.OmitEmpty || fn != "" {
 				out = append(out, Pair{tag.Name, tag.JSON, fn})
 			}
+		case Bytes:
+			if !tag.OmitEmpty || len(fn) > 0 {
+				out = append(out, Pair{tag.Name, tag.JSON, fn})
+			}
 		case Time:
 			if !tag.OmitEmpty || !time.Time(fn).IsZero() {
 				out = append(out, Pair{tag.Name, tag.JSON, fn})
@@ -301,6 +319,13 @@ func (this Handler) Marshal(c ctx.C, in any) (Node, error) {
 	switch in := in.(type) {
 	case nil:
 		return Nil{}, nil
+	case []byte:
+		if in == nil {
+			return Nil{}, nil
+		}
+		out := make(Bytes, len(in))
+		copy(out, in)
+		return out, nil
 	case time.Time:
 		return Time(in), nil
 		// return String(in.Format(time.RFC3339Nano)), nil

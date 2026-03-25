@@ -72,6 +72,7 @@ func TestJSON(t *testing.T) {
 		check(t, `3`, enc.Digits(`3`))
 		check(t, `true`, enc.Bool(true))
 		check(t, `"foo"`, enc.String("foo"))
+		checkLeft(t, `"AQID"`, enc.Bytes{1, 2, 3})
 		check(t, `"\""`, enc.String(`"`))
 		check(t, `"\\"`, enc.String(`\`))
 		check(t, `"\\\""`, enc.String(`\"`))
@@ -175,4 +176,22 @@ func TestNoData(t *testing.T) {
 		test.NoError(t, err)
 		test.Nil(t, n)
 	}
+}
+
+func TestBytesJSONCompat(t *testing.T) {
+	c := test.Context(t)
+
+	in := []byte{1, 2, 3}
+	n, err := enc.Marshal(c, in)
+	test.NoError(t, err)
+	test.EqualsGo(t, enc.Bytes{1, 2, 3}, n)
+
+	j, err := enc.MarshalJSON(c, in)
+	test.NoError(t, err)
+	test.EqualsStr(t, `"AQID"`, string(j))
+
+	var out []byte
+	err = enc.UnmarshalJSON(c, j, &out)
+	test.NoError(t, err)
+	test.EqualsGo(t, in, out)
 }
