@@ -91,6 +91,7 @@ func (this *shutter) waitForSignal(c ctx.C, cf ctx.CancelFunc) {
 
 	// TODO(oha): should we keep this here? seems a bit like unexpected magic to me
 	sigusr := make(chan os.Signal, 1)
+	signal.Notify(sigusr, syscall.SIGUSR1)
 
 	for i := 0; ; {
 		log.Infof(c, "waiting for signal...")
