@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"reflect"
+	"slices"
 	"strings"
 
 	"github.com/ohait/forego/ctx"
@@ -14,6 +15,17 @@ import (
 type Pairs []Pair
 
 var _ Node = Pairs{}
+
+func (this Pairs) Delete(keys ...string) Pairs {
+	out := Pairs{}
+	for _, p := range this {
+		found := slices.Contains(keys, p.JSON)
+		if !found {
+			out = append(out, p)
+		}
+	}
+	return out
+}
 
 func (this Pairs) AsMap() Map {
 	out := Map{}

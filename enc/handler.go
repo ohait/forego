@@ -239,11 +239,11 @@ func warnIneff(c ctx.C, f string, args ...any) {
 //	func (f Filter) MarshalNode(c ctx.C) (enc.Node, error) {
 //		return enc.MarshalStruct(c, f, enc.Pair{JSON: "type", Value: enc.String("filter")})
 //	}
-func MarshalStruct(c ctx.C, in any, pairs ...Pair) (Node, error) {
+func MarshalStruct(c ctx.C, in any, pairs ...Pair) (Pairs, error) {
 	return Handler{}.MarshalStruct(c, in, pairs...)
 }
 
-func (this Handler) MarshalStruct(c ctx.C, in any, pairs ...Pair) (Node, error) {
+func (this Handler) MarshalStruct(c ctx.C, in any, pairs ...Pair) (Pairs, error) {
 	v := reflect.ValueOf(in)
 	if !v.IsValid() {
 		return nil, ctx.NewErrorf(c, "can't marshal %T as struct", in)
