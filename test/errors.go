@@ -31,3 +31,19 @@ func Error(t testing.TB, err error) {
 		OK(t, "%v", err) // NOTE(oha): no need to show the stack trace here, it's expected
 	}
 }
+
+func ErrorIs(t testing.TB, err error, target error) {
+	t.Helper()
+	if isNil(err).succeed {
+		Fail(t, "expected error: %s", stringy{ast.Assignment(0, 1)})
+	} else if errors.Is(err, target) {
+		OK(t, "%v", err) // NOTE(oha): no need to show the stack trace here, it's expected
+	} else {
+		var cErr ctx.Error
+		if errors.As(err, &cErr) {
+			Fail(t, "%v\n\t%s", err, strings.Join(cErr.Stack, "\n\t"))
+		} else {
+			Fail(t, "%T %v", err, err)
+		}
+	}
+}
