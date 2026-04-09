@@ -14,8 +14,8 @@ func TestPairs(t *testing.T) {
 		Bar any `json:"bar"`
 	}
 	p := enc.Pairs{
-		{Name: "Foo", JSON: "foo", Value: enc.Integer(3)},
-		{Name: "Bar", JSON: "bar", Value: enc.Integer(7)},
+		{Name: "foo", Value: enc.Integer(3)},
+		{Name: "bar", Value: enc.Integer(7)},
 	}
 	enc.MustUnmarshal(c, p, &x)
 	test.EqualsJSON(t, 3, x.Foo)

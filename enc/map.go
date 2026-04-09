@@ -93,9 +93,15 @@ func (this Map) unmarshalInto(c ctx.C, handler Handler, into reflect.Value) erro
 			fv := into.Field(i)
 			ft := vt.Field(i)
 			if ft.IsExported() {
-				tag := parseTag(ft)
-				seen[tag.JSON] = true
-				v, ok := this[tag.JSON]
+				tag, err := parseTag(ft)
+				if err != nil {
+					return ctx.WrapError(c, err)
+				}
+				if tag.Skip {
+					continue
+				}
+				seen[tag.Name] = true
+				v, ok := this[tag.Name]
 				if ok {
 					err := handler.Append(tag.Name).unmarshal(c, v, fv)
 					if err != nil {

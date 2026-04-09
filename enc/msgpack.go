@@ -132,7 +132,7 @@ func encodeMsgPackNode(enc *msgpack.Encoder, n Node) error {
 			return err
 		}
 		for _, p := range n {
-			err = enc.EncodeString(p.JSON)
+			err = enc.EncodeString(p.Name)
 			if err != nil {
 				return err
 			}

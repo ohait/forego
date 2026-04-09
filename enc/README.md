@@ -61,11 +61,39 @@ func handle(n enc.Node) error {
 ## Marshal vs Encode
 
 To simplify the documentation, we will use *marshal* when transforming an object into the interstitial types, and *encoding* when converting the
-intermediate to a JSON `[]byte`.
+intermediate to a JSON or MsgPack `[]byte`.
 
 Similarly, we say *decoding* when parsing the JSON `[]byte` and *unmarshalling* when coercing the interstitial into an object type
 
 More details can be found in the distinct types.
+
+## Field Names
+
+When a `struct` is marshalled into `enc.Node`, each object field gets a single canonical name.
+
+The name is resolved as follows:
+
+* If `name:"foo"` is present, that is the canonical name.
+* Otherwise `json`, `yaml`, or `msgpack` may provide the name.
+* If none of those tags are present, the Go field name is used.
+
+All explicit names must agree. These are valid:
+
+```go
+FieldID string `json:"id"`
+FieldID string `name:"id"`
+FieldID string `name:"id" json:"id" yaml:"id" msgpack:"id"`
+```
+
+These are rejected:
+
+```go
+FieldID string `json:"id" yaml:"field_id"`
+FieldID string `name:"id" json:"field_id"`
+FieldID string `json:"id" yaml:"-"`
+```
+
+Skipping also has to agree across formats. If one format uses `"-"` while another names the field, it is treated as a configuration error.
 
 
 ## Types
@@ -151,6 +179,14 @@ This is a special type that can Marshal itself as a `JSON object`, but is implem
 
 To keep the usability of this library high, we opted to avoid Ordered-Maps which are clumsy to use, and instead allow you to choose between the 
 fast `enc.Map`, or the ordered `enc.Pairs`.
+
+Each `enc.Pair` only stores one field name:
+
+```go
+enc.Pair{Name: "type", Value: enc.String("filter")}
+```
+
+That same canonical `Name` is used when encoding to JSON and MsgPack.
 
 
 ### Custom `enc.Marshaler`, `enc.Unmarshaler` vs `json.Marshaler` and `json.Unmarshaler`
@@ -287,4 +323,3 @@ that blacklist might change per request, based on the user settings or permissio
 
 Another advantage of having access to the `ctx.C` is that you can properly use `ctx/log` and still retains tags which might contains
 information helpful for debugging
-

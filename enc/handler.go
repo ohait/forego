@@ -237,7 +237,7 @@ func warnIneff(c ctx.C, f string, args ...any) {
 // this can be useful for adding a "type" field to a struct:
 //
 //	func (f Filter) MarshalNode(c ctx.C) (enc.Node, error) {
-//		return enc.MarshalStruct(c, f, enc.Pair{JSON: "type", Value: enc.String("filter")})
+//		return enc.MarshalStruct(c, f, enc.Pair{Name: "type", Value: enc.String("filter")})
 //	}
 func MarshalStruct(c ctx.C, in any, pairs ...Pair) (Pairs, error) {
 	return Handler{}.MarshalStruct(c, in, pairs...)
@@ -264,7 +264,10 @@ func (this Handler) MarshalStruct(c ctx.C, in any, pairs ...Pair) (Pairs, error)
 		if !ft.IsExported() {
 			continue
 		}
-		tag := parseTag(ft)
+		tag, err := parseTag(ft)
+		if err != nil {
+			return nil, ctx.WrapError(c, err)
+		}
 		if tag.Skip {
 			continue
 		}
@@ -276,34 +279,34 @@ func (this Handler) MarshalStruct(c ctx.C, in any, pairs ...Pair) (Pairs, error)
 		switch fn := fn.(type) {
 		case Nil:
 			if !tag.OmitEmpty {
-				out = append(out, Pair{tag.Name, tag.JSON, fn})
+				out = append(out, Pair{tag.Name, fn})
 			}
 		case String:
 			if !tag.OmitEmpty || fn != "" {
-				out = append(out, Pair{tag.Name, tag.JSON, fn})
+				out = append(out, Pair{tag.Name, fn})
 			}
 		case Integer:
 			if !tag.OmitEmpty || fn != 0 {
-				out = append(out, Pair{tag.Name, tag.JSON, fn})
+				out = append(out, Pair{tag.Name, fn})
 			}
 		case Float:
 			if !tag.OmitEmpty || fn != 0.0 {
-				out = append(out, Pair{tag.Name, tag.JSON, fn})
+				out = append(out, Pair{tag.Name, fn})
 			}
 		case Digits:
 			if !tag.OmitEmpty || fn != "" {
-				out = append(out, Pair{tag.Name, tag.JSON, fn})
+				out = append(out, Pair{tag.Name, fn})
 			}
 		case Bytes:
 			if !tag.OmitEmpty || len(fn) > 0 {
-				out = append(out, Pair{tag.Name, tag.JSON, fn})
+				out = append(out, Pair{tag.Name, fn})
 			}
 		case Time:
 			if !tag.OmitEmpty || !time.Time(fn).IsZero() {
-				out = append(out, Pair{tag.Name, tag.JSON, fn})
+				out = append(out, Pair{tag.Name, fn})
 			}
 		default:
-			out = append(out, Pair{tag.Name, tag.JSON, fn})
+			out = append(out, Pair{tag.Name, fn})
 		}
 	}
 	return out, nil

@@ -89,35 +89,60 @@ func (this Pipe) Close(c ctx.C) error {
 
 type Tag struct {
 	Name      string
-	JSON      string
 	OmitEmpty bool
 	Skip      bool
 }
 
-// TODO(oha): we need to parse `enc`, `json` and eventually `yaml` and make sure they agree
-func parseTag(tag reflect.StructField) (out Tag) {
+func parseTag(tag reflect.StructField) (out Tag, err error) {
 	out.Name = tag.Name
 
-	json := tag.Tag.Get("json")
-	if json == "-" {
-		out.Skip = true
-		return
-	}
-	json, extra, _ := strings.Cut(json, ",")
-	out.JSON = json
-	if out.JSON == "" {
-		out.JSON = out.Name
-	}
-	if extra != "" {
-		for _, opt := range strings.Split(extra, ",") {
-			switch opt {
-			case "omitempty", "omitzero":
-				out.OmitEmpty = true
-			case "":
-			default:
-				panic(fmt.Sprintf("invalid tag: %v", tag))
+	names := []string{tag.Tag.Get("name")}
+	skip := false
+	sawSkip := false
+	for _, key := range []string{"json", "yaml", "msgpack"} {
+		raw := tag.Tag.Get(key)
+		if raw == "-" {
+			skip = true
+			sawSkip = true
+			continue
+		}
+		name, extra, _ := strings.Cut(raw, ",")
+		if extra != "" {
+			for _, opt := range strings.Split(extra, ",") {
+				switch opt {
+				case "omitempty", "omitzero", "inline":
+				case "":
+				default:
+					return out, fmt.Errorf("invalid %s tag on %v: %q", key, tag, opt)
+				}
+			}
+			if key == "json" {
+				for _, opt := range strings.Split(extra, ",") {
+					switch opt {
+					case "omitempty", "omitzero":
+						out.OmitEmpty = true
+					}
+				}
 			}
 		}
+		names = append(names, name)
 	}
-	return
+
+	for _, name := range names {
+		if name == "" {
+			continue
+		}
+		if sawSkip {
+			return out, fmt.Errorf("conflicting field config on %v: skip and name %q", tag, name)
+		}
+		if out.Name == tag.Name {
+			out.Name = name
+			continue
+		}
+		if out.Name != name {
+			return out, fmt.Errorf("conflicting field names on %v: %q != %q", tag, out.Name, name)
+		}
+	}
+	out.Skip = skip
+	return out, nil
 }

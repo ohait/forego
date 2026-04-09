@@ -19,7 +19,7 @@ var _ Node = Pairs{}
 func (this Pairs) Delete(keys ...string) Pairs {
 	out := Pairs{}
 	for _, p := range this {
-		found := slices.Contains(keys, p.JSON)
+		found := slices.Contains(keys, p.Name)
 		if !found {
 			out = append(out, p)
 		}
@@ -30,7 +30,7 @@ func (this Pairs) Delete(keys ...string) Pairs {
 func (this Pairs) AsMap() Map {
 	out := Map{}
 	for _, p := range this {
-		out[p.JSON] = p.Value
+		out[p.Name] = p.Value
 	}
 	return out
 }
@@ -38,7 +38,7 @@ func (this Pairs) AsMap() Map {
 func (this Pairs) native() any {
 	out := map[string]any{}
 	for _, p := range this {
-		out[p.JSON] = p.Value.native()
+		out[p.Name] = p.Value.native()
 	}
 	return out
 }
@@ -46,7 +46,7 @@ func (this Pairs) native() any {
 func (this Pairs) String() string {
 	list := []string{}
 	for _, p := range this {
-		list = append(list, fmt.Sprintf("%q:%#s", p.JSON, p.Value))
+		list = append(list, fmt.Sprintf("%q:%#s", p.Name, p.Value))
 	}
 	return "enc.Pairs{" + strings.Join(list, ", ") + "}"
 }
@@ -54,7 +54,7 @@ func (this Pairs) String() string {
 func (this Pairs) GoString() string {
 	list := []string{}
 	for _, p := range this {
-		list = append(list, fmt.Sprintf("%q:%#s", p.JSON, p.Value))
+		list = append(list, fmt.Sprintf("%q:%#s", p.Name, p.Value))
 	}
 	return "enc.Pairs{" + strings.Join(list, ", ") + "}"
 }
@@ -66,7 +66,7 @@ func (this Pairs) MarshalJSON() ([]byte, error) {
 		if i > 0 {
 			buf.WriteString(", ")
 		}
-		buf.Write(mustJSON(p.JSON))
+		buf.Write(mustJSON(p.Name))
 		buf.WriteString(": ")
 		buf.Write(mustJSON(p.Value))
 	}
@@ -76,7 +76,7 @@ func (this Pairs) MarshalJSON() ([]byte, error) {
 
 func (this Pairs) Find(name string) Node {
 	for _, p := range this {
-		if p.JSON == name {
+		if p.Name == name {
 			return p.Value
 		}
 	}
@@ -87,20 +87,17 @@ func (this Pairs) unmarshalInto(c ctx.C, handler Handler, into reflect.Value) er
 	// to make it easier to maintain, we convert to a map and reuse that code
 	m := Map{}
 	for _, p := range this {
-		m[p.JSON] = p.Value
-		// using the p.JSON is the only option, even tho it looks wrong
-		// the reason for this is that enc.Map{} does not know fields and maps to objects directly
+		m[p.Name] = p.Value
 	}
 	return m.unmarshalInto(c, handler, into)
 }
 
 type Pair struct {
 	Name string
-	JSON string // FIXME(oha): we can't really support Name and JSON, we must collapse to name and have all the tags agree
 
 	Value Node
 }
 
 func (this Pair) String() string {
-	return fmt.Sprintf("%q:%s", this.JSON, this.Value)
+	return fmt.Sprintf("%q:%s", this.Name, this.Value)
 }

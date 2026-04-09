@@ -114,9 +114,9 @@ func TestMarshal(t *testing.T) {
 	test.NoError(t, err)
 
 	test.EqualsJSON(t, enc.Pairs{ // NOTE(oha): since we conflate a struct, we preserve the order of the fields using enc.Pairs
-		{"S", "s", enc.String("foo")},
-		{"I", "i", enc.Integer(42)},
-		{"V", "v", enc.List{
+		{"s", enc.String("foo")},
+		{"i", enc.Integer(42)},
+		{"v", enc.List{
 			enc.Nil{},
 			enc.Integer(2),
 			enc.Bool(true),
@@ -156,18 +156,18 @@ func TestMarshalStruct(t *testing.T) {
 	}
 
 	{
-		n, err := enc.MarshalStruct(c, X{S: "foo"}, enc.Pair{JSON: "type", Value: enc.String("x")})
+		n, err := enc.MarshalStruct(c, X{S: "foo"}, enc.Pair{Name: "type", Value: enc.String("x")})
 		test.NoError(t, err)
 		test.EqualsJSON(t, enc.Pairs{
-			{JSON: "type", Value: enc.String("x")},
-			{Name: "S", JSON: "s", Value: enc.String("foo")},
+			{Name: "type", Value: enc.String("x")},
+			{Name: "s", Value: enc.String("foo")},
 		}, n)
 	}
 	{
 		n, err := enc.MarshalStruct(c, &X{S: "bar"})
 		test.NoError(t, err)
 		test.EqualsJSON(t, enc.Pairs{
-			{Name: "S", JSON: "s", Value: enc.String("bar")},
+			{Name: "s", Value: enc.String("bar")},
 		}, n)
 	}
 	{
@@ -183,6 +183,40 @@ func TestMarshalStruct(t *testing.T) {
 		_, err := enc.MarshalStruct(c, nil)
 		test.Error(t, err)
 	}
+	{
+		type Y struct {
+			S string `json:"s" yaml:"other"`
+		}
+		_, err := enc.MarshalStruct(c, Y{S: "bad"})
+		test.Error(t, err)
+	}
+	{
+		type Y struct {
+			S string `json:"s" yaml:"-"`
+		}
+		_, err := enc.MarshalStruct(c, Y{S: "bad"})
+		test.Error(t, err)
+	}
+	{
+		type Y struct {
+			S string `name:"field" json:"field" yaml:"field"`
+		}
+		n, err := enc.MarshalStruct(c, Y{S: "ok"})
+		test.NoError(t, err)
+		test.EqualsJSON(t, enc.Pairs{
+			{Name: "field", Value: enc.String("ok")},
+		}, n)
+	}
+	{
+		type Y struct {
+			S string `name:"field"`
+		}
+		n, err := enc.MarshalStruct(c, Y{S: "ok"})
+		test.NoError(t, err)
+		test.EqualsJSON(t, enc.Pairs{
+			{Name: "field", Value: enc.String("ok")},
+		}, n)
+	}
 }
 
 func TestOmitEmpty(t *testing.T) {
@@ -196,6 +230,41 @@ func TestOmitEmpty(t *testing.T) {
 	}
 	j := enc.MustMarshalJSON(c, x{})
 	test.NotContainsJSON(t, j, "field")
+}
+
+func TestUnmarshalStructSkip(t *testing.T) {
+	c := test.Context(t)
+
+	type X struct {
+		Hidden string `json:"-"`
+		Shown  string `json:"shown"`
+	}
+
+	var x X
+	err := enc.Unmarshal(c, enc.Map{
+		"Hidden": enc.String("nope"),
+		"shown":  enc.String("ok"),
+	}, &x)
+	test.NoError(t, err)
+	test.EqualsJSON(t, "", x.Hidden)
+	test.EqualsJSON(t, "ok", x.Shown)
+
+	var unhandled []string
+	err = enc.Handler{
+		UnhandledFields: func(c ctx.C, path []any, n enc.Node) error {
+			if len(path) > 0 {
+				if s, ok := path[len(path)-1].(string); ok {
+					unhandled = append(unhandled, s)
+				}
+			}
+			return nil
+		},
+	}.Unmarshal(c, enc.Map{
+		"Hidden": enc.String("still-unhandled"),
+		"shown":  enc.String("ok"),
+	}, &x)
+	test.NoError(t, err)
+	test.EqualsJSON(t, []string{"Hidden"}, unhandled)
 }
 
 func TestOmitEmptyBytes(t *testing.T) {
