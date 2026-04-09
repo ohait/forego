@@ -149,8 +149,9 @@ func (this *Handler) Register(c ctx.C, obj any) error {
 		}
 		conn.byChan.Store(ch.ID, ch)
 		obj, err := b.build(C{
-			C:  c,
-			ch: ch,
+			C:   c,
+			ch:  ch,
+			rid: f.RID,
 		}, f.Data)
 		if err != nil {
 			log.Warnf(c, "build %q: %v", b.name, err)
@@ -159,6 +160,7 @@ func (this *Handler) Register(c ctx.C, obj any) error {
 				Path:    f.Path,
 				Type:    "return",
 				Data:    enc.MustMarshal(c, err),
+				RID:     f.RID,
 			})
 		}
 		log.Debugf(c, "new %+v", obj)

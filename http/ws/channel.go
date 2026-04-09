@@ -34,13 +34,14 @@ func (this *Channel) onData(c ctx.C, f Frame) error {
 	if this.Conn != nil && this.Conn.h != nil && this.Conn.h.Trace {
 		log.Debugf(c, "ch[%q].%q(%v)", f.Channel, f.Path, f.Data)
 	}
-	err := fn(C{C: c, ch: this}, f.Data)
+	err := fn(C{C: c, ch: this, rid: f.RID}, f.Data)
 	if err != nil {
 		log.Warnf(c, "ws: %s error: %v", f.Path, err)
 		_ = this.Conn.Send(c, Frame{
 			Channel: this.ID,
 			Type:    "error",
 			Data:    enc.MustMarshal(c, err.Error()),
+			RID:     f.RID,
 		})
 	}
 	return nil
@@ -55,12 +56,15 @@ type Frame struct {
 
 	Type string `json:"type"` // data, error, close
 
+	RID string `json:"rid,omitempty"` // request id for matching request and response
+
 	Data enc.Node `json:"data,omitempty"`
 }
 
 type C struct {
 	ctx.C
-	ch *Channel
+	ch  *Channel
+	rid string
 }
 
 func (c C) Reply(path string, obj any) error {
@@ -68,6 +72,7 @@ func (c C) Reply(path string, obj any) error {
 		Channel: c.ch.ID,
 		Path:    path,
 		Data:    enc.MustMarshal(c, obj),
+		RID:     c.rid,
 	})
 }
 

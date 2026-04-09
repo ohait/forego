@@ -51,6 +51,7 @@ func (this builder) build(c C, req enc.Node) (any, error) {
 					Path:    method.name,
 					Type:    "return",
 					Data:    enc.MustMarshal(c, err),
+					RID:     c.rid,
 				})
 				log.Infof(c, "ws[%s|%s]: error: %v", c.ch.ID, method.name, err)
 				return nil
@@ -59,6 +60,7 @@ func (this builder) build(c C, req enc.Node) (any, error) {
 				Channel: c.ch.ID,
 				Path:    method.name,
 				Type:    "return",
+				RID:     c.rid,
 			})
 		}
 	}

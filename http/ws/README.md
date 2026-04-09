@@ -17,6 +17,8 @@ The WebSocket protocol uses **channels** to manage multiple concurrent RPC sessi
 
 All messages include a `channel` field (arbitrary string ID) to route to the correct object instance.
 
+Messages may also include an optional `rid` field. When present on an incoming request, the server copies it to any reply, `return`, or `error` frame triggered by that request so the client can correlate responses.
+
 
 Example:
 
@@ -60,6 +62,7 @@ After connecting to the WebSocket, a client instantiates a new Counter by sendin
 ```json
 {
   "channel": "c1",
+  "rid": "req-1", // optional
   "type": "open",
   "path": "counter"
 }
@@ -91,6 +94,7 @@ Query the current value:
 ```json
 {
   "channel": "c1",
+  "rid": "req-3",  // optional
   "path": "get"
 }
 ```
@@ -100,10 +104,13 @@ The server will reply with:
 ```json
 {
   "channel": "c1",
+  "rid": "req-3", // <- same as request
   "path": "ct",
   "data": 7
 }
 ```
+
+If a handler returns an error, the emitted `return` or `error` frame will include the same `rid` when the request carried one.
 
 #### Close
 
@@ -158,7 +165,7 @@ At registration, the list of exposed methods is logged for reference, and the on
 ### Using `ws.C`
 
 The `ws.C` context compose a normal `ctx.C` but also provides:
-- `c.Reply(path string, obj any)`: Send a reply message to the client
+- `c.Reply(path string, obj any)`: Send a reply message to the client, preserving the incoming `rid`
 - `c.Close()`: Close the WebSocket connection
 - All methods from `ctx.C` (logging, cancellation, etc.)
 
