@@ -106,7 +106,14 @@ func (this *Conn) onData(c ctx.C, f Frame) error {
 		if ch := this.byChan.Get(f.Channel); ch != nil {
 			return ch.onData(c, f)
 		}
-		return ctx.NewErrorf(c, "unknown channel")
+		log.Warnf(c, "ws: unknown channel %q", f.Channel)
+		return this.Send(c, Frame{
+			Channel: f.Channel,
+			Type:    "error",
+			Path:    f.Path,
+			RID:     f.RID,
+			Data:    enc.String("unknown channel"),
+		})
 	}
 }
 

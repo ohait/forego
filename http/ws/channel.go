@@ -29,7 +29,14 @@ func (this *Channel) Close(c ctx.C) error {
 func (this *Channel) onData(c ctx.C, f Frame) error {
 	fn := this.byPath[f.Path]
 	if fn == nil {
-		return ctx.NewErrorf(c, "no %q for channel %q", f.Path, f.Channel)
+		log.Warnf(c, "ws: unknown path %q for channel %q", f.Path, f.Channel)
+		return this.Conn.Send(c, Frame{
+			Channel: f.Channel,
+			Type:    "error",
+			Path:    f.Path,
+			RID:     f.RID,
+			Data:    enc.String("unknown path"),
+		})
 	}
 	if this.Conn != nil && this.Conn.h != nil && this.Conn.h.Trace {
 		log.Debugf(c, "ch[%q].%q(%v)", f.Channel, f.Path, f.Data)
