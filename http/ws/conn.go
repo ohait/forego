@@ -97,6 +97,19 @@ func (this *Conn) onData(c ctx.C, f Frame) error {
 			return ch.Close(c)
 		}
 		return nil
+	case "cancel": // cancel a request
+		if ch := this.byChan.Get(f.Channel); ch != nil {
+			return ch.cancelRequest(c, f.RID)
+		} else {
+			log.Warnf(c, "ws: unknown channel %q for cancelling request %q", f.Channel, f.RID)
+			return this.Send(c, Frame{
+				Channel: f.Channel,
+				Type:    "error",
+				Path:    f.Path,
+				RID:     f.RID,
+				Data:    enc.String("unknown channel"),
+			})
+		}
 	case "new", "open":
 		if fn := this.h.byPath.Get(f.Path); fn != nil {
 			return fn(c, this, f)
