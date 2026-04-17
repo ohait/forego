@@ -233,6 +233,25 @@ func warnIneff(c ctx.C, f string, args ...any) {
 	}
 }
 
+func (this Handler) marshalValue(c ctx.C, v reflect.Value) (Node, error) {
+	if !v.IsValid() {
+		return Nil{}, nil
+	}
+	if v.CanAddr() {
+		if in, ok := v.Addr().Interface().(Marshaler); ok {
+			return in.MarshalNode(c)
+		}
+		if in, ok := v.Addr().Interface().(json.Marshaler); ok {
+			j, err := in.MarshalJSON()
+			if err != nil {
+				return nil, err
+			}
+			return JSON{}.Decode(c, j)
+		}
+	}
+	return this.Marshal(c, v.Interface())
+}
+
 // transform a struct into a enc.Node, using the struct tags to determine the field names and options, allow custom pairs
 // this can be useful for adding a "type" field to a struct:
 //
@@ -272,7 +291,7 @@ func (this Handler) MarshalStruct(c ctx.C, in any, pairs ...Pair) (Pairs, error)
 			continue
 		}
 		fv := v.Field(i)
-		fn, err := this.Marshal(c, fv.Interface())
+		fn, err := this.marshalValue(c, fv)
 		if err != nil {
 			return nil, err
 		}
@@ -383,7 +402,7 @@ func (this Handler) Marshal(c ctx.C, in any) (Node, error) {
 		list := List{}
 		for i := 0; i < v.Len(); i++ {
 			ev := v.Index(i)
-			e, err := this.Marshal(c, ev.Interface())
+			e, err := this.marshalValue(c, ev)
 			if err != nil {
 				return nil, err
 			}

@@ -4,10 +4,23 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ohait/forego/ctx"
 	"github.com/ohait/forego/enc"
 	"github.com/ohait/forego/test"
 	"github.com/vmihailenco/msgpack/v5"
 )
+
+type pointerColumn struct {
+	Name string `json:"name"`
+}
+
+func (x *pointerColumn) MarshalNode(c ctx.C) (enc.Node, error) {
+	return enc.String("custom:" + x.Name), nil
+}
+
+type pointerChunk struct {
+	Columns []pointerColumn `json:"columns,omitempty"`
+}
 
 func TestMsgPack(t *testing.T) {
 	c := test.Context(t)
@@ -88,6 +101,24 @@ func TestMsgPackHelpers(t *testing.T) {
 	err = enc.UnmarshalMsgPack(c, data, &out)
 	test.NoError(t, err)
 	test.EqualsGo(t, in, out)
+}
+
+func TestMsgPackHelpersPointerMarshalerInSlice(t *testing.T) {
+	c := test.Context(t)
+
+	in := pointerChunk{
+		Columns: []pointerColumn{{Name: "a"}},
+	}
+	n, err := enc.Marshal(c, in)
+	test.NoError(t, err)
+	test.EqualsJSON(t, enc.Pairs{{Name: "columns", Value: enc.List{enc.String("custom:a")}}}, n)
+
+	data, err := enc.MarshalMsgPack(c, in)
+	test.NoError(t, err)
+
+	outNode, err := enc.MsgPack{}.Decode(c, data)
+	test.NoError(t, err)
+	test.EqualsJSON(t, enc.Pairs{{Name: "columns", Value: enc.List{enc.String("custom:a")}}}, outNode)
 }
 
 func TestMsgPackNoData(t *testing.T) {
