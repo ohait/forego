@@ -1,23 +1,24 @@
 # WebSockets
 
-This library allows you to bind multiple objects to a WebSocket, exposing some of their methods.
+This library binds objects to a WebSocket and exposes selected methods.
 
-You could call it RPC over WebSockets.
+You can think of it as RPC over WebSockets.
 
 ## How It Works
 
-The WebSocket protocol uses **channels** to manage multiple concurrent RPC sessions over a single WebSocket connection. Each channel represents an independent instance of a registered object. The same object type could be instantiated multiple times using different channel IDs.
+The protocol uses **channels** to multiplex RPC sessions over one WebSocket connection. Each channel is an independent instance of a registered object. The same object type can be instantiated multiple times using different channel IDs.
 
 ### Message Flow
 
-1. **Opening a channel**: Client sends a message with `type: "open"` (or `"new"`) to instantiate an object
-2. **Calling methods**: Client sends messages with `path: "methodName"` to invoke methods on that instance
-3. **Receiving replies**: Server sends messages with `path: "methodName"` containing data
-4. **Closing a channel**: Client sends `type: "close"` for that channel to destroy the instance
+1. **Open a channel**: Client sends `type: "open"` (or `"new"`) to instantiate an object
+2. **Call methods**: Client sends messages with `path: "methodName"` to invoke methods on that instance
+3. **Receive replies**: Server sends messages with `path: "methodName"` containing data
+4. **Cancel a request**: Client may send `type: "cancel"` with the matching `rid` to cancel in-flight work
+5. **Close a channel**: Client sends `type: "close"` for that channel to destroy the instance
 
 All messages include a `channel` field (arbitrary string ID) to route to the correct object instance.
 
-Messages may also include an optional `rid` field. When present on an incoming request, the server copies it to any reply, `return`, or `error` frame triggered by that request so the client can correlate responses.
+Messages may also include an optional `rid` field. When present on an incoming request, the server copies it to any reply or `error` frame triggered by that request so the client can correlate responses. Within a channel, requests may run concurrently, so `rid` is the only reliable way to match replies to calls.
 
 
 Example:
@@ -68,7 +69,7 @@ After connecting to the WebSocket, a client instantiates a new Counter by sendin
 }
 ```
 
-**Note**: The `path` field when opening must match the lowercase struct name (e.g., `Counter` → `"counter"`).
+**Note**: The `path` field when opening must match the lowercase struct name (for example, `Counter` → `"counter"`).
 
 If the object has an `Init(c ws.C)` method, it will be called during instantiation.
 
@@ -87,7 +88,7 @@ Increment it by 7 with:
 }
 ```
 
-**Note**: Method names have their first letter lowercased (e.g., `Inc()` → `"inc"`, `IngestFile()` → `"ingestFile"`).
+**Note**: Method names have their first letter lowercased (for example, `Inc()` → `"inc"`, `IngestFile()` → `"ingestFile"`).
 
 Query the current value:
 
@@ -110,7 +111,21 @@ The server will reply with:
 }
 ```
 
-If a handler returns an error, the emitted `return` or `error` frame will include the same `rid` when the request carried one.
+If a handler returns an error, the emitted `error` frame will include the same `rid` when the request carried one.
+
+#### Cancel
+
+To cancel a request that is still running, send the same `channel` and `rid` with `type: "cancel"`:
+
+```json
+{
+  "channel": "c1",
+  "rid": "req-3",
+  "type": "cancel"
+}
+```
+
+Cancellation is cooperative: the handler must observe `c.Done()` or otherwise respect context cancellation. Replies are suppressed once the request context has been cancelled.
 
 #### Close
 
@@ -147,7 +162,7 @@ This library inspects the given object using reflection to determine what to exp
 
 ### Fields
 
-Any public field with a non-zero value is shallow-copied to new instances when a channel is opened. This allows you to configure shared settings (like `MinIncrement` in the example).
+Any public field with a non-zero value is shallow-copied to new instances when a channel is opened. This lets you configure shared settings like `MinIncrement` in the example.
 
 
 ### Exposed Methods
@@ -158,13 +173,13 @@ Any public method (excluding `Init` and `Close` with signature `func (receiver *
 - **Second parameter** (optional): Receives the `data` field from the client message (unmarshaled to the parameter type)
 - **Return**: Must return `error`
 
-The `data` field from client messages is automatically unmarshaled into the method's second parameter type before calling.
+The `data` field from client messages is automatically unmarshaled into the method's second parameter type before calling. Calls on the same channel may execute concurrently, so handlers must be safe for concurrent use if clients issue overlapping requests.
 
 At registration, the list of exposed methods is logged for reference, and the one rejected (if any) with the reason.
 
 ### Using `ws.C`
 
-The `ws.C` context compose a normal `ctx.C` but also provides:
+`ws.C` wraps a normal `ctx.C` and also provides:
 - `c.Reply(path string, obj any)`: Send a reply message to the client, preserving the incoming `rid`
 - `c.Close()`: Close the WebSocket connection
 - All methods from `ctx.C` (logging, cancellation, etc.)
@@ -172,7 +187,7 @@ The `ws.C` context compose a normal `ctx.C` but also provides:
 
 ## Test
 
-Since all the bindings to the WebSocket is automatic, you could (and probably should) test the object directly for functionalities and ignore the bindings entirely
+Since the WebSocket binding is automatic, you can usually test the object directly and ignore the transport layer.
 
 Alternatively you can use the provided test client:
 
@@ -192,13 +207,13 @@ Alternatively you can use the provided test client:
 	})
 ```
 
-This client allows you to open channels, call methods, and receive replies, all in a test environment and without go-routines.
+This client allows you to open channels, call methods, and receive replies in a test environment without a real network connection.
 
 
 ## `Handler{}.Server()`
 
-calling `.Server()` on a handler, will create an `http.Handler` which can be used on any http server.
+Calling `.Server()` on a handler returns an `http.Handler` that can be used on any HTTP server.
 
-Internally it uses `golang.org/x/net/websocket` which implements `http.Handler`
+Internally it uses `golang.org/x/net/websocket`, which implements `http.Handler`.
 
-you might need to modify the `.Handshake` function pointer, by default it accept from the same origin
+You might need to modify the `.Handshake` function pointer; by default it accepts requests from the same origin.

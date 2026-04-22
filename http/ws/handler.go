@@ -154,7 +154,9 @@ func (this *Handler) Register(c ctx.C, obj any) error {
 			rid: f.RID,
 		}, f.Data)
 		if err != nil {
-			log.Warnf(c, "build %q: %v", b.name, err)
+			if c.Err() == nil {
+				log.Warnf(c, "build %q: %v", b.name, err)
+			}
 			return conn.Send(c, Frame{
 				Channel: f.Channel,
 				Path:    f.Path,

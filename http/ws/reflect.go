@@ -157,7 +157,7 @@ func (this *builder) inspect(c ctx.C, obj any) error {
 				log.Infof(c, "WS handler %q with no args", method.name)
 			}
 		default:
-			log.Debugf(c, "WS ignoring %q because %d args", method.name, method.argument)
+			log.Debugf(c, "WS ignoring %q because %d args", method.name, m.Type.NumIn())
 			continue
 		}
 		switch m.Name {

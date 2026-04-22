@@ -88,57 +88,100 @@ func (this *TestClient) Close(c ctx.C) error {
 	return this.conn.Close(c, 1000)
 }
 
-// open a channel, and return a call function that will send the data to the given path, and block until
-// 1. the function finish with no error
-// 2. the function finish with an error
-// 3. the callback onData returns an error
-func (this *TestClient) Open(c ctx.C, path string, data any, onData func(ctx.C, Frame) error) (call func(ctx.C, string, any) error, err error) {
-	chID := uuid.NewString()
-	ech := make(chan error, 1)
-	this.ws.byChan[chID] = func(c ctx.C, f Frame) error {
-		switch f.Type {
-		case "return", "error":
-			var err error
-			if f.Data != nil {
-				err = ctx.NewErrorf(c, "remote: %s", f.Data)
-			}
-			select {
-			case ech <- err:
-			default:
-			}
-			return nil // Return early - don't pass return/error frames to user callback
+type TestChannel struct {
+	cli      *TestClient
+	id       string
+	ech      map[string]chan error
+	cb       map[string]func(ctx.C, Frame) error
+	fallback func(ctx.C, Frame) error
+}
+
+func (this *TestChannel) Close(c ctx.C) error {
+	return this.cli.Close(c)
+}
+
+func (this *TestChannel) onData(c ctx.C, f Frame) error {
+	switch f.Type {
+	case "return", "error":
+		ech := this.ech[f.RID]
+		if ech == nil {
+			return this.fallback(c, f)
 		}
-		err := onData(c, f)
-		if err != nil {
-			select {
-			case ech <- err:
-			default:
-			}
+		var err error
+		if f.Data != nil {
+			err = ctx.NewErrorf(c, "remote: %s", f.Data)
+		}
+		if ech != nil {
+			ech <- err
 		}
 		return nil
+	case "":
+		cb := this.cb[f.RID]
+		if cb != nil {
+			return cb(c, f)
+		}
+		return this.fallback(c, f)
+	default:
+		log.Warnf(c, "unknown type %s", f.Type)
+		return nil
 	}
-	return func(c ctx.C, path string, data any) error {
-			err := this.Send(c, Frame{
-				Channel: chID,
-				Path:    path,
-				Data:    enc.MustMarshal(c, data),
-			})
-			if err != nil {
-				return err
-			}
-			select {
-			case err := <-ech:
-				return err
-			case <-c.Done():
-				return c.Err()
+}
 
-			}
-		}, this.Send(c, Frame{
-			Type:    "open",
-			Channel: chID,
-			Path:    path,
-			Data:    enc.MustMarshal(c, data),
-		})
+func (this *TestChannel) Send(c ctx.C, f Frame) error {
+	return this.cli.Send(c, f)
+}
+
+func (this *TestChannel) SendData(c ctx.C, path string, data any) error {
+	n, err := enc.Marshal(c, data)
+	if err != nil {
+		return err
+	}
+	return this.Send(c, Frame{Path: path, Data: n})
+}
+
+func (this *TestChannel) Request(c ctx.C, path string, args any,
+	onData func(ctx.C, Frame) error,
+) error {
+	rid := uuid.NewString()
+	ech := make(chan error, 1)
+	this.ech[rid] = ech
+	this.cb[rid] = onData
+	err := this.cli.Send(c, Frame{
+		RID:     rid,
+		Channel: this.id,
+		Path:    path,
+		Data:    enc.MustMarshal(c, args),
+	})
+	if err != nil {
+		return err
+	}
+	select {
+	case err := <-ech:
+		return err
+	case <-c.Done():
+		return c.Err()
+	}
+}
+
+// open a channel, and return a test channel handler
+// the handler can be used to call remote functions
+func (this *TestClient) Open(c ctx.C, path string, data any,
+	onData func(ctx.C, Frame) error,
+) (*TestChannel, error) {
+	ch := &TestChannel{
+		cli:      this,
+		id:       uuid.NewString(),
+		ech:      map[string]chan error{},
+		cb:       map[string]func(ctx.C, Frame) error{},
+		fallback: onData,
+	}
+	this.ws.byChan[ch.id] = ch.onData
+	return ch, this.Send(c, Frame{
+		Type:    "open",
+		Channel: ch.id,
+		Path:    path,
+		Data:    enc.MustMarshal(c, data),
+	})
 }
 
 // experimental

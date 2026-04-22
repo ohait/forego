@@ -24,7 +24,11 @@ func isNil(a any) res {
 		v := reflect.ValueOf(a)
 		switch v.Kind() {
 		case reflect.Slice, reflect.Map, reflect.Chan, reflect.Pointer:
-			return res{v.IsNil(), fmt.Sprintf("%#v", a)}
+			s := fmt.Sprintf("%#v", a)
+			if len(s) > 100 {
+				s = s[:100] + "..."
+			}
+			return res{v.IsNil(), s}
 		default:
 			return res{false, stringy{a}.String()}
 		}

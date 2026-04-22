@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -15,12 +16,35 @@ type Map map[string]Node
 
 var _ Node = Map{}
 
+// return pairs sorted alphabetically by key
+func (this Map) Pairs() Pairs {
+	p := make(Pairs, 0, len(this))
+	keys := make([]string, 0, len(this))
+	for k := range this {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		p = append(p, Pair{Name: k, Value: this[k]})
+	}
+	return p
+}
+
 func (this Map) native() any {
 	out := map[string]any{}
 	for k, n := range this {
 		out[k] = n.native()
 	}
 	return out
+}
+
+func (this Map) GetString(k string) (string, bool) {
+	n, ok := this[k]
+	if !ok {
+		return "", false
+	}
+	s, ok := n.(String)
+	return string(s), ok
 }
 
 func (this Map) MarshalJSON() ([]byte, error) {
