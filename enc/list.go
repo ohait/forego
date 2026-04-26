@@ -21,6 +21,24 @@ func (this List) native() any {
 	return out
 }
 
+// Maps returns a slice of all the map nodes in this list.
+// Pairs are promoted to Maps
+// any other types are ignored
+func (this List) Maps() []Map {
+	out := []Map{}
+	for _, n := range this {
+		switch n := n.(type) {
+		case Map:
+			out = append(out, n)
+		case Pairs:
+			out = append(out, n.AsMap())
+		default:
+			// skip
+		}
+	}
+	return out
+}
+
 func (this List) GoString() string {
 	list := []string{}
 	for _, p := range this {
@@ -46,10 +64,10 @@ func (this List) unmarshalInto(c ctx.C, handler Handler, into reflect.Value) err
 
 	case reflect.Slice:
 		slice := reflect.MakeSlice(into.Type(), len(this), len(this))
-		for i := 0; i < len(this); i++ {
+		for i := range this {
 			ev := slice.Index(i)
 			err := handler.Append(i).unmarshal(c, this[i], ev)
-			//err := this[i].unmarshalInto(c, handler, path.Append(i), ev)
+			// err := this[i].unmarshalInto(c, handler, path.Append(i), ev)
 			if err != nil {
 				return err
 			}

@@ -111,9 +111,7 @@ func (this *TestChannel) onData(c ctx.C, f Frame) error {
 		if f.Data != nil {
 			err = ctx.NewErrorf(c, "remote: %s", f.Data)
 		}
-		if ech != nil {
-			ech <- err
-		}
+		ech <- err
 		return nil
 	case "":
 		cb := this.cb[f.RID]
@@ -165,12 +163,12 @@ func (this *TestChannel) Request(c ctx.C, path string, args any,
 
 // open a channel, and return a test channel handler
 // the handler can be used to call remote functions
-func (this *TestClient) Open(c ctx.C, path string, data any,
+func (this *TestClient) Open(c ctx.C, path, chid string, data any,
 	onData func(ctx.C, Frame) error,
 ) (*TestChannel, error) {
 	ch := &TestChannel{
 		cli:      this,
-		id:       uuid.NewString(),
+		id:       chid,
 		ech:      map[string]chan error{},
 		cb:       map[string]func(ctx.C, Frame) error{},
 		fallback: onData,
