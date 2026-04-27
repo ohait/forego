@@ -91,18 +91,24 @@ func NewServer(c ctx.C) *Server {
 		c = ctx.WithTag(c, "path", r.URL.Path)
 
 		w2 := &response{w, 0}
+		r2 := r.WithContext(c)
 		switch w := w.(type) {
 		case http.Hijacker:
 			// if there is an hijacker, we need to be a bit clever
-			this.mux.ServeHTTP(responseHijacker{w2, w}, r.WithContext(c))
+			this.mux.ServeHTTP(responseHijacker{w2, w}, r2)
 		default:
-			this.mux.ServeHTTP(w2, r.WithContext(c))
+			this.mux.ServeHTTP(w2, r2)
+		}
+
+		path := r2.Pattern
+		if path == "" {
+			path = r.URL.Path
 		}
 
 		metric{
 			Method: r.Method,
 			Code:   w2.code,
-			Path:   r.URL.Path, // TODO(oha) if we have templates, this won't work
+			Path:   path,
 		}.observe(time.Since(t0))
 	})
 
