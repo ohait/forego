@@ -11,8 +11,10 @@ type Map[K comparable, T any] struct {
 	m sync.Map
 }
 
-var _ enc.Marshaler = (*Map[string, any])(nil)
-var _ enc.Unmarshaler = (*Map[string, any])(nil)
+var (
+	_ enc.Marshaler   = (*Map[string, any])(nil)
+	_ enc.Unmarshaler = (*Map[string, any])(nil)
+)
 
 func (this *Map[K, V]) Map() map[K]V {
 	m := map[K]V{}
@@ -89,6 +91,19 @@ func (this *Map[K, V]) Store(key K, val V) {
 	this.m.Store(key, val)
 }
 
+func (this *Map[K, V]) Delete(key K) {
+	this.m.Delete(key)
+}
+
+func (this *Map[K, V]) LoadAndDelete(key K) (V, bool) {
+	v, loaded := this.m.LoadAndDelete(key)
+	if v == nil {
+		var zero V
+		return zero, loaded
+	}
+	return v.(V), loaded
+}
+
 func (this *Map[K, V]) Range(f func(key K, val V) bool) {
 	this.m.Range(func(key, val any) bool {
 		return f(key.(K), val.(V))
@@ -103,17 +118,4 @@ func (this *Map[K, V]) RangeErr(f func(key K, val V) error) error {
 		return err == nil
 	})
 	return err
-}
-
-func (this *Map[K, V]) Delete(key K) {
-	this.m.Delete(key)
-}
-
-func (this *Map[K, V]) LoadAndDelete(key K) (V, bool) {
-	v, loaded := this.m.LoadAndDelete(key)
-	if v == nil {
-		var zero V
-		return zero, loaded
-	}
-	return v.(V), loaded
 }

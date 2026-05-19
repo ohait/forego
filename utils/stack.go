@@ -80,7 +80,8 @@ func (this StackFrame) Pkg() string {
 var mod = func() (out struct {
 	name string // the name of the current module in go.mod
 	path string // the dir which contains the go.mod file
-}) {
+},
+) {
 	d, _ := os.Getwd()
 	for {
 		body, _ := os.ReadFile(d + "/go.mod")

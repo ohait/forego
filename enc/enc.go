@@ -16,6 +16,10 @@ type Node interface {
 	GoString() string
 }
 
+type Iterable interface {
+	Pairs() Pairs
+}
+
 type Codec interface {
 	Encode(c ctx.C, n Node) []byte
 	Decode(c ctx.C, data []byte) (Node, error)
