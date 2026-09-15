@@ -8,11 +8,9 @@ import (
 )
 
 type Counter struct {
-	Name   string
 	Desc   string
 	Labels []string
 	val    sync.Map[string, *counter]
-	Gauge  bool // set to true if this counter needs to be reported as a gauge (but see gauge.go for a better API)
 }
 
 type counter struct {
@@ -31,33 +29,27 @@ func (this *counter) observe(val float64) {
 	this.sum += val
 }
 
-func (this *Counter) Print(w io.Writer) error {
+func (this *Counter) Print(name string, w io.Writer) error {
 	first := true
 	return this.val.RangeErr(func(l string, v *counter) error {
 		if first {
 			first = false
-			_, err := fmt.Fprintf(w, "# HELP %s %s\n", this.Name, this.Desc)
+			_, err := fmt.Fprintf(w, "# HELP %s %s\n", name, this.Desc)
 			if err != nil {
 				return err
 			}
-			if this.Gauge {
-				_, err = fmt.Fprintf(w, "# TYPE %s gauge\n", this.Name)
-				if err != nil {
-					return err
-				}
-			} else {
-				_, err = fmt.Fprintf(w, "# TYPE %s counter\n", this.Name)
-				if err != nil {
-					return err
-				}
+			_, err = fmt.Fprintf(w, "# TYPE %s counter\n", name)
+			if err != nil {
+				return err
 			}
 		}
+		v.m.Lock()
+		defer v.m.Unlock()
 		if l == "" {
-			_, err := fmt.Fprintf(w, "%s %f\n", this.Name, v.sum)
-			return err
-		} else {
-			_, err := fmt.Fprintf(w, "%s{%s} %f\n", this.Name, l, v.sum)
+			_, err := fmt.Fprintf(w, "%s %f\n", name, v.sum)
 			return err
 		}
+		_, err := fmt.Fprintf(w, "%s{%s} %f\n", name, l, v.sum)
+		return err
 	})
 }
