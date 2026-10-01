@@ -22,6 +22,69 @@ func WrapError(c C, err error) error {
 	return maybeWrap(c, err)
 }
 
+// Recover converts a panic in the current goroutine into a ctx.Error and stores
+// the panic stack. Call it with defer and assign its result to the function's
+// named error return:
+//
+//	func run(c ctx.C) (err error) {
+//		defer ctx.Recover(c, &err)
+//		// ...
+//		return nil
+//	}
+//
+// Recover is a no-op when there is no active panic. It must run in the same
+// goroutine as the panic; a caller cannot recover a panic from another
+// goroutine.
+func Recover(c C, err *error) {
+	rec := recover()
+	if rec == nil || err == nil {
+		return
+	}
+	if *err != nil {
+		*err = fmt.Errorf("%w: panic: %v", *err, rec)
+		return
+	}
+	*err = Error{
+		Err:   fmt.Errorf("panic: %v", rec),
+		Stack: debugStack(),
+		C:     c,
+	}
+}
+
+func debugStack() []string {
+	frames := runtime.CallersFrames(panicCallers())
+	stack := make([]string, 0, 20)
+	capturingPanic := false
+	for {
+		frame, more := frames.Next()
+		if frame.Function == "runtime.gopanic" || frame.Function == "runtime.sigpanic" {
+			capturingPanic = true
+			if !more {
+				return stack
+			}
+			continue
+		}
+		if !capturingPanic || frame.Function == "github.com/ohait/forego/ctx.Recover" {
+			if !more {
+				return stack
+			}
+			continue
+		}
+		if frame.Function != "" && frame.Function != "github.com/ohait/forego/ctx.debugStack" {
+			stack = append(stack, fmt.Sprintf("%s:%d", frame.File, frame.Line))
+		}
+		if !more {
+			return stack
+		}
+	}
+}
+
+func panicCallers() []uintptr {
+	var pcs [64]uintptr
+	n := runtime.Callers(3, pcs[:])
+	return pcs[:n]
+}
+
 // Error is the rich error type used by Forego. It records the wrapped error,
 // the stack leading to its creation, and the context active at that time so it
 // can later be inspected or logged with tags intact.
