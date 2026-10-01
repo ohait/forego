@@ -11,7 +11,6 @@ import (
 func TestCounter(t *testing.T) {
 
 	m := prom.Counter{
-		Name:   t.Name(),
 		Labels: []string{"path", "op"},
 	}
 	m.Observe(3.14, "/foo", "read")
@@ -20,7 +19,9 @@ func TestCounter(t *testing.T) {
 	m.Observe(2, "/bar", "read")
 
 	w := &bytes.Buffer{}
-	m.Print(w)
+	if err := m.Print(t.Name(), w); err != nil {
+		t.Fatal(err)
+	}
 	t.Logf("full: \n%s", w.String())
 	test.Contains(t, w.String(), "/foo")
 	test.Contains(t, w.String(), "1.5") // 0.5 + 1.0
